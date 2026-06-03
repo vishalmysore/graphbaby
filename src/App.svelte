@@ -16,7 +16,8 @@
   import IndividualEditor from './lib/components/editor/IndividualEditor.svelte';
   import UsagePanel from './lib/components/panels/UsagePanel.svelte';
   import GraphPanel from './lib/components/panels/GraphPanel.svelte';
-  import AIImportPanel from './lib/components/panels/AIImportPanel.svelte';
+  import OntologyWizard from './lib/components/panels/OntologyWizard.svelte';
+  import type { ProposedClass, ProposedIndividual } from './lib/ai/webllm';
 
   // ── AI engine ─────────────────────────────────────────────────────────────
   const llm = new WebLLMEngine();
@@ -26,7 +27,7 @@
   let selectedModel = $state('');
 
   // ── UI state ───────────────────────────────────────────────────────────────
-  let showAIImport = $state(false);
+  let showWizard = $state(false);
   let showGraph = $state(false);
   let aiRunning = $state(false);
   let aiSuggestion = $state('');
@@ -77,28 +78,69 @@
     }
   }
 
-  // ── AI extraction ──────────────────────────────────────────────────────────
-  async function handleAIExtract(text: string, iri: string) {
-    showAIImport = false;
-    modelStatus = 'running'; aiRunning = true; error = '';
+  // ── Wizard handlers ────────────────────────────────────────────────────────
+  async function handleExtractClasses(text: string): Promise<ProposedClass[]> {
+    modelStatus = 'running'; aiRunning = true;
     try {
-      const result = await llm.extractOntology(text, iri);
-      const merged: Ontology = {
-        ...emptyOntology(),
-        ...result,
-        id: store.ontology.id,
-        label: store.ontology.label,
-        // Preserve owl:Thing
-        classes: { owl_Thing: store.ontology.classes.owl_Thing, ...result.classes },
-      };
-      store.loadOntology(merged);
-      await saveOntology(store.ontology);
-      savedOntologies = await loadOntologies();
-    } catch (e) {
-      error = String(e);
+      return await llm.extractClassHierarchy(text, store.ontology.iri);
     } finally {
       modelStatus = 'ready'; aiRunning = false;
     }
+  }
+
+  function handleApplyClasses(classes: ProposedClass[]) {
+    for (const cls of classes) {
+      // avoid duplicating existing ids
+      if (!store.ontology.classes[cls.id]) {
+        store.ontology.classes[cls.id] = {
+          id: cls.id,
+          iri: `${store.ontology.iri}#${cls.id}`,
+          label: cls.label,
+          subClassOf: [cls.subClassOf],
+          equivalentClasses: [],
+          disjointWith: [],
+          annotations: cls.description
+            ? [{ property: 'rdfs:comment', value: cls.description }]
+            : [],
+        };
+      }
+    }
+    store.ontology.updatedAt = Date.now();
+    // Switch to Classes tab so user sees the result
+    store.setActiveTab('class');
+  }
+
+  async function handleExtractIndividuals(text: string): Promise<ProposedIndividual[]> {
+    modelStatus = 'running'; aiRunning = true;
+    try {
+      const classes = Object.values(store.ontology.classes).map((c) => ({ id: c.id, label: c.label }));
+      const ops = Object.values(store.ontology.objectProperties).map((p) => ({ id: p.id, label: p.label }));
+      const dps = Object.values(store.ontology.dataProperties).map((p) => ({ id: p.id, label: p.label }));
+      return await llm.extractIndividuals(text, classes, ops, dps);
+    } finally {
+      modelStatus = 'ready'; aiRunning = false;
+    }
+  }
+
+  function handleApplyIndividuals(individuals: ProposedIndividual[]) {
+    for (const ind of individuals) {
+      if (!store.ontology.individuals[ind.id]) {
+        store.ontology.individuals[ind.id] = {
+          id: ind.id,
+          iri: `${store.ontology.iri}#${ind.id}`,
+          label: ind.label,
+          types: ind.types,
+          sameAs: [],
+          differentFrom: [],
+          objectPropertyAssertions: ind.objectPropertyAssertions,
+          dataPropertyAssertions: ind.dataPropertyAssertions,
+          annotations: [],
+        };
+      }
+    }
+    store.ontology.updatedAt = Date.now();
+    // Switch to Individuals tab so user sees the result
+    store.setActiveTab('individual');
   }
 
   // ── Class AI actions ───────────────────────────────────────────────────────
@@ -324,7 +366,7 @@
       <div class="tree-footer">
         <button
           class="ai-import-btn"
-          onclick={() => (showAIImport = true)}
+          onclick={() => (showWizard = true)}
           disabled={!llm.isReady()}
         >
           ✦ AI Extract from Text
@@ -426,13 +468,16 @@
   </footer>
 </div>
 
-{#if showAIImport}
-  <AIImportPanel
+{#if showWizard}
+  <OntologyWizard
     modelReady={modelStatus === 'ready'}
     running={aiRunning}
-    baseIRI={store.ontology.iri}
-    onExtract={handleAIExtract}
-    onClose={() => (showAIImport = false)}
+    ontology={store.ontology}
+    onExtractClasses={handleExtractClasses}
+    onApplyClasses={handleApplyClasses}
+    onExtractIndividuals={handleExtractIndividuals}
+    onApplyIndividuals={handleApplyIndividuals}
+    onClose={() => (showWizard = false)}
   />
 {/if}
 

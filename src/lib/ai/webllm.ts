@@ -73,6 +73,84 @@ export class WebLLMEngine {
     } catch { return []; }
   }
 
+  /** Step 1 of wizard: extract ONLY class hierarchy from domain text */
+  async extractClassHierarchy(text: string, baseIRI: string): Promise<ProposedClass[]> {
+    if (!this.engine) throw new Error('Model not loaded');
+
+    const resp = await this.engine.chat.completions.create({
+      messages: [
+        {
+          role: 'system',
+          content: `You are an OWL ontology class hierarchy designer.
+From the given text, identify the key domain classes and their hierarchy.
+Return ONLY valid JSON — an array of class objects:
+[
+  { "id": "snake_case_id", "label": "Human Label", "subClassOf": "parent_id_or_owl_Thing", "description": "one sentence definition" }
+]
+Rules:
+- Every id must be unique snake_case
+- subClassOf must reference another id in the list, or "owl_Thing"
+- Keep to 6-15 meaningful classes — not too granular
+- Focus on the DOMAIN (what types of things exist), not individual instances`,
+        },
+        { role: 'user', content: `Extract the class hierarchy for this domain:\n\n${text}` },
+      ],
+      temperature: 0.1,
+      max_tokens: 1500,
+    });
+
+    return parseProposedClasses(resp.choices[0].message.content ?? '', baseIRI);
+  }
+
+  /** Step 2 of wizard: extract individuals using already-approved classes */
+  async extractIndividuals(
+    text: string,
+    classes: { id: string; label: string }[],
+    objectProps: { id: string; label: string }[],
+    dataProps: { id: string; label: string }[],
+  ): Promise<ProposedIndividual[]> {
+    if (!this.engine) throw new Error('Model not loaded');
+
+    const classStr = classes.map((c) => `"${c.id}" (${c.label})`).join(', ');
+    const opStr = objectProps.map((p) => `"${p.id}" (${p.label})`).join(', ') || 'none';
+    const dpStr = dataProps.map((p) => `"${p.id}" (${p.label})`).join(', ') || 'none';
+
+    const resp = await this.engine.chat.completions.create({
+      messages: [
+        {
+          role: 'system',
+          content: `You are an OWL individual (instance) extractor.
+Using ONLY the classes and properties listed below, extract named individuals from the text.
+DO NOT invent new classes.
+
+Available classes: ${classStr}
+Available object properties: ${opStr}
+Available data properties: ${dpStr}
+
+Return ONLY valid JSON — an array of individual objects:
+[
+  {
+    "id": "snake_case_id",
+    "label": "Human Name",
+    "types": ["class_id"],
+    "objectPropertyAssertions": [{"property": "prop_id", "target": "individual_id"}],
+    "dataPropertyAssertions": [{"property": "prop_id", "value": "...", "type": "xsd:string"}]
+  }
+]
+Rules:
+- Use only class ids from the available classes list
+- Individual ids must be unique snake_case
+- Extract real named entities (people, places, things) — not abstract concepts`,
+        },
+        { role: 'user', content: `Extract individuals from this text:\n\n${text}` },
+      ],
+      temperature: 0.1,
+      max_tokens: 2500,
+    });
+
+    return parseProposedIndividuals(resp.choices[0].message.content ?? '');
+  }
+
   async generateClassDescription(classLabel: string, context: string): Promise<string> {
     if (!this.engine) throw new Error('Model not loaded');
     const resp = await this.engine.chat.completions.create({
@@ -147,4 +225,70 @@ function parseOntologyJSON(raw: string, baseIRI: string): Partial<Ontology> {
   }
 
   return onto;
+}
+
+// ── Wizard types ─────────────────────────────────────────────────────────────
+
+export interface ProposedClass {
+  id: string;
+  label: string;
+  subClassOf: string;       // single parent id or 'owl_Thing'
+  description: string;
+  approved: boolean;
+}
+
+export interface ProposedIndividual {
+  id: string;
+  label: string;
+  types: string[];
+  objectPropertyAssertions: { property: string; target: string }[];
+  dataPropertyAssertions: { property: string; value: string; type: string }[];
+  approved: boolean;
+}
+
+function extractJSON(raw: string): string {
+  const block = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (block) return block[1].trim();
+  const arr = raw.match(/(\[[\s\S]*\])/);
+  if (arr) return arr[1].trim();
+  const obj = raw.match(/(\{[\s\S]*\})/);
+  if (obj) return obj[1].trim();
+  return raw.trim();
+}
+
+function parseProposedClasses(raw: string, _baseIRI: string): ProposedClass[] {
+  try {
+    const parsed = JSON.parse(extractJSON(raw));
+    if (!Array.isArray(parsed)) throw new Error('not array');
+    return parsed.map((c: { id: string; label: string; subClassOf?: string; description?: string }) => ({
+      id: c.id ?? `class_${Math.random().toString(36).slice(2, 7)}`,
+      label: c.label ?? c.id,
+      subClassOf: c.subClassOf ?? 'owl_Thing',
+      description: c.description ?? '',
+      approved: true,
+    }));
+  } catch {
+    throw new Error(`Could not parse class hierarchy from AI response:\n${raw}`);
+  }
+}
+
+function parseProposedIndividuals(raw: string): ProposedIndividual[] {
+  try {
+    const parsed = JSON.parse(extractJSON(raw));
+    if (!Array.isArray(parsed)) throw new Error('not array');
+    return parsed.map((i: {
+      id: string; label: string; types?: string[];
+      objectPropertyAssertions?: { property: string; target: string }[];
+      dataPropertyAssertions?: { property: string; value: string; type: string }[];
+    }) => ({
+      id: i.id ?? `ind_${Math.random().toString(36).slice(2, 7)}`,
+      label: i.label ?? i.id,
+      types: i.types ?? [],
+      objectPropertyAssertions: i.objectPropertyAssertions ?? [],
+      dataPropertyAssertions: i.dataPropertyAssertions ?? [],
+      approved: true,
+    }));
+  } catch {
+    throw new Error(`Could not parse individuals from AI response:\n${raw}`);
+  }
 }
