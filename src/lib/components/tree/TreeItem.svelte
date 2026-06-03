@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { TreeNode } from '../../ontology/hierarchy';
+  import TreeItem from './TreeItem.svelte';
 
   interface Props {
     node: TreeNode;
@@ -51,7 +52,7 @@
 
   {#if expanded && node.children.length > 0}
     {#each node.children as child}
-      <svelte:self node={child} {selectedId} {onSelect} {onAdd} {onDelete} />
+      <TreeItem node={child} {selectedId} {onSelect} {onAdd} {onDelete} />
     {/each}
   {/if}
 </div>
