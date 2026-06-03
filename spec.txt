@@ -1,0 +1,259 @@
+Project Spec: GraphSage (or GraphBaby / Protégé-inspired)
+1. Overview
+
+Build a fully client-side AI-powered knowledge graph editor that runs entirely in the browser using WebLLM (WebGPU/WASM).
+
+The app converts:
+
+text → entities + relationships → interactive knowledge graph
+
+It should behave like a modern, lightweight version of Protégé, but AI-assisted.
+
+Core idea:
+
+Users paste text or documents → AI extracts structured knowledge → interactive graph is generated → user can edit/export it.
+
+2. Goals
+Primary Goals
+100% browser-based (no backend)
+Works on GitHub Pages deployment
+Uses WebLLM for local inference
+
+Converts unstructured text into a knowledge graph (triples):
+
+(Entity A) --[relationship]--> (Entity B)
+Interactive graph editing + exploration
+Secondary Goals
+Allow iterative refinement ("improve graph", "expand node")
+Export/import graph as JSON / RDF-like structure
+Fast enough for real-time interaction on modern laptops
+3. Core Features
+3.1 Input System
+
+Users can input:
+
+Plain text (notes, articles)
+Bullet points
+PDFs (optional future)
+URL pasted content (client-side fetch)
+3.2 AI Layer (WebLLM)
+
+Use WebLLM to perform:
+
+Task 1: Entity Extraction
+
+Extract:
+
+entities
+types (Person, Concept, Organization, Object, etc.)
+Task 2: Relationship Extraction
+
+Convert into triples:
+
+{
+  "subject": "Node A",
+  "predicate": "relates_to",
+  "object": "Node B"
+}
+Task 3: Graph Refinement Commands
+
+Support natural language commands:
+
+"simplify graph"
+"merge duplicate nodes"
+"expand this node"
+"find missing relationships"
+3.3 Graph Engine
+
+Use a browser graph library:
+
+Cytoscape.js OR
+D3.js OR
+Sigma.js (preferred for performance)
+
+Graph must support:
+
+zoom / pan
+node click → details panel
+drag nodes
+edit labels
+delete nodes/edges
+3.4 Knowledge Graph Model
+
+Internal format:
+
+type Node = {
+  id: string;
+  label: string;
+  type?: string;
+};
+
+type Edge = {
+  source: string;
+  target: string;
+  label: string;
+};
+
+type Graph = {
+  nodes: Node[];
+  edges: Edge[];
+};
+
+Store in:
+
+IndexedDB (persistent local storage)
+4. WebLLM Prompt Design
+System Prompt
+You are a knowledge graph extraction engine.
+Convert input text into a structured graph of entities and relationships.
+
+Return ONLY valid JSON:
+
+{
+  "nodes": [{"id": "...", "label": "...", "type": "..."}],
+  "edges": [{"source": "...", "target": "...", "label": "..."}]
+}
+
+Rules:
+- Keep nodes minimal but meaningful
+- Merge duplicates
+- Prefer canonical entity names
+- Use simple relationship labels (is, part_of, causes, works_at, etc.)
+Example Output
+
+Input:
+
+"Albert Einstein developed the theory of relativity at Princeton University."
+
+Output:
+
+{
+  "nodes": [
+    {"id": "einstein", "label": "Albert Einstein", "type": "Person"},
+    {"id": "relativity", "label": "Theory of Relativity", "type": "Concept"},
+    {"id": "princeton", "label": "Princeton University", "type": "Organization"}
+  ],
+  "edges": [
+    {"source": "einstein", "target": "relativity", "label": "developed"},
+    {"source": "einstein", "target": "princeton", "label": "worked_at"}
+  ]
+}
+5. UI Requirements
+Layout
+Left panel: input text + controls
+Center: graph visualization
+Right panel: node inspector (properties + AI suggestions)
+Controls
+"Generate Graph"
+"Expand Selection"
+"Simplify Graph"
+"Merge Nodes"
+"Export JSON"
+"Reset Graph"
+Node Interaction
+
+Click node → show:
+
+description
+connected edges
+AI-generated summary
+6. WebLLM Integration
+
+Use:
+
+@mlc-ai/web-llm
+
+Requirements:
+
+Load model in browser
+Cache model using IndexedDB
+Provide loading state UI
+Allow model selection (Phi-3 / Llama 3 small variants)
+
+Fallback:
+
+if WebGPU unavailable → show warning + reduced mode
+7. Data Storage
+
+Use:
+
+IndexedDB (primary)
+LocalStorage (fallback)
+
+Store:
+
+graphs
+raw inputs
+AI outputs
+history/versioning
+8. Export / Import
+
+Export formats:
+
+JSON (native)
+GraphML (optional future)
+RDF-like triples (future extension)
+9. Deployment
+GitHub Pages
+static build output (dist/)
+no server required
+GitHub Actions
+
+Workflow:
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm install
+      - run: npm run build
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+10. Tech Stack
+Frontend
+React OR Svelte (preferred Svelte for speed)
+TypeScript
+Graph
+Sigma.js (preferred) or Cytoscape.js
+AI
+WebLLM (@mlc-ai/web-llm)
+Storage
+IndexedDB (idb wrapper)
+Build
+Vite
+11. Non-Goals (Important)
+No backend server
+No cloud inference required
+No authentication system initially
+No multi-user collaboration in v1
+No database server
+12. Future Ideas
+Multi-document knowledge merging
+Agent that “asks questions to improve graph”
+Wikipedia-style browsing mode
+Graph reasoning layer (path finding explanations)
+Plugin system for domain ontologies
+13. Suggested Product Identity
+
+If you want Protégé-like positioning:
+
+GraphSage → best academic + AI tone
+GraphBaby → more playful, consumer-facing
+OntoGraph AI → most formal / semantic web aligned
