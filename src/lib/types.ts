@@ -1,25 +1,3 @@
-export type NodeType = 'Person' | 'Concept' | 'Organization' | 'Object' | 'Event' | 'Place' | 'Unknown';
-
-export interface KGNode {
-  id: string;
-  label: string;
-  type?: NodeType | string;
-}
-
-export interface KGEdge {
-  source: string;
-  target: string;
-  label: string;
-}
-
-export interface KGGraph {
-  id?: string;
-  nodes: KGNode[];
-  edges: KGEdge[];
-  createdAt?: number;
-  rawInput?: string;
-}
-
 export type ModelStatus = 'idle' | 'loading' | 'ready' | 'running' | 'error';
 
 export interface ModelInfo {

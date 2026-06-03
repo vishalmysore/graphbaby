@@ -1,9 +1,9 @@
 import { openDB, type IDBPDatabase } from 'idb';
-import type { KGGraph } from '../types';
+import type { Ontology } from '../ontology/types';
 
-const DB_NAME = 'graphbaby';
+const DB_NAME = 'graphbaby_v2';
 const DB_VERSION = 1;
-const STORE_GRAPHS = 'graphs';
+const STORE = 'ontologies';
 
 let db: IDBPDatabase | null = null;
 
@@ -11,31 +11,23 @@ async function getDB(): Promise<IDBPDatabase> {
   if (db) return db;
   db = await openDB(DB_NAME, DB_VERSION, {
     upgrade(database) {
-      database.createObjectStore(STORE_GRAPHS, { keyPath: 'id' });
+      database.createObjectStore(STORE, { keyPath: 'id' });
     },
   });
   return db;
 }
 
-export async function saveGraph(graph: KGGraph): Promise<string> {
+export async function saveOntology(onto: Ontology): Promise<void> {
   const database = await getDB();
-  const id = graph.id ?? `graph_${Date.now()}`;
-  const record = { ...graph, id, createdAt: graph.createdAt ?? Date.now() };
-  await database.put(STORE_GRAPHS, record);
-  return id;
+  await database.put(STORE, onto);
 }
 
-export async function loadGraphs(): Promise<KGGraph[]> {
+export async function loadOntologies(): Promise<Ontology[]> {
   const database = await getDB();
-  return database.getAll(STORE_GRAPHS);
+  return database.getAll(STORE);
 }
 
-export async function deleteGraph(id: string): Promise<void> {
+export async function deleteOntology(id: string): Promise<void> {
   const database = await getDB();
-  await database.delete(STORE_GRAPHS, id);
-}
-
-export async function loadGraph(id: string): Promise<KGGraph | undefined> {
-  const database = await getDB();
-  return database.get(STORE_GRAPHS, id);
+  await database.delete(STORE, id);
 }
