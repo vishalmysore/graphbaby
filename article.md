@@ -1,16 +1,18 @@
 # Ontologies, Knowledge Graphs, and Artificial Intelligence
 
-> **Ontology**, **knowledge graph**, and **artificial intelligence** are three of the most confused terms in tech. Add **WebLLM** to the mix and the lines blur even further. This is an attempt to draw them back apart.
+> **Ontologies** and **knowledge graphs** are decades-old ideas that most people still mix up. **Artificial intelligence** is the new force reshaping both — and with **WebLLM**, it now runs in a browser tab. Here's how the three fit together.
 
 ---
 
-## 1. Three ideas that keep getting tangled
+## 1. An old idea meets a new engine
 
-**Ontology**, **knowledge graph**, and **artificial intelligence** get used almost interchangeably — in talks, in docs, in casual conversation. They are related and they overlap, but they are genuinely different things, and the difference matters the moment you try to build anything with them.
+**Ontologies** and **knowledge graphs** come out of the semantic-web world, and they are constantly confused with each other — people say "knowledge graph" when they mean ontology, and "ontology" when they just mean a diagram with arrows. The two are genuinely different things, and the difference is the first thing this article pins down.
 
-Throw **WebLLM** into the mix — a large language model that runs *entirely in your browser*, no server, no cloud inference — and the boundaries blur even more. Suddenly an AI can read text and spit out a graph in seconds, which makes it tempting to wave a hand and call the whole thing "knowledge." But which part is the AI, which part is the knowledge graph, and where does the ontology actually live?
+**Artificial intelligence** isn't a third synonym in that mix — it's the new force acting on both. For decades, building a knowledge graph meant armies of human curators or brittle hand-tuned extractors, and authoring an ontology meant a specialist hunched over a formal editor. Large language models change that: feed an LLM a paragraph and it will hand you back entities and relationships in seconds. The old, painstaking disciplines suddenly have a fast, sloppy, surprisingly capable new engine.
 
-I kept wanting a way to make the *fundamentals* of ontologies and knowledge graphs easier to understand — not by reading another definition, but by watching them take shape. So I built a small experimental tool, **GraphBaby**, to do exactly that: you paste in text, a local LLM extracts entities and relationships, and the result renders as an interactive graph you can poke at. It puts all three ideas in one place — the AI doing the extraction, the knowledge graph holding the output, and the open question of how much ontology you'd need before you could trust the result.
+**[WebLLM](https://github.com/mlc-ai/web-llm)** makes the shift almost absurd: it runs that LLM *entirely in your browser* — no server, no cloud inference, no data leaving your machine. The barrier to turning text into a graph drops to a single paste-and-click.
+
+I wanted to make the *fundamentals* of ontologies and knowledge graphs easier to grasp — not by reading another definition, but by watching them take shape from real text. So I built a small experimental tool, **GraphBaby**, to do exactly that: paste in text, a local LLM extracts entities and relationships, and the result renders as an interactive graph you can poke at. It puts all three in one place — the AI doing the extraction, the knowledge graph holding the output, and the open question of how much ontology you'd need before you could trust any of it.
 
 This article uses that little experiment to untangle the three properly. Let's start at the foundation.
 
