@@ -31,6 +31,13 @@ Rules:
 - Keep ontology minimal but complete
 - Prefer reusing defined classes in domain/range over creating new ones`;
 
+const GRAPH_QA_SYSTEM_PROMPT = `You are a knowledge-graph assistant for an OWL ontology editor.
+Answer the user's question using ONLY the ontology facts provided in the user message.
+- Be concise and direct; prefer short sentences or bullet points.
+- Refer to entities by their human labels.
+- If the provided facts do not contain the answer, say you don't have that information in this ontology — do NOT invent classes, individuals, or relationships.
+- You may combine and reason over the given facts (e.g. follow relationships), but never beyond them.`;
+
 export class WebLLMEngine {
   private engine: webllm.MLCEngine | null = null;
 
@@ -149,6 +156,30 @@ Rules:
     });
 
     return parseProposedIndividuals(resp.choices[0].message.content ?? '');
+  }
+
+  /** RAG chat: answer a question grounded on retrieved ontology facts. */
+  async chatOverContext(
+    question: string,
+    context: string,
+    history: { role: 'user' | 'assistant'; content: string }[] = [],
+  ): Promise<string> {
+    if (!this.engine) throw new Error('Model not loaded');
+    const messages = [
+      { role: 'system', content: GRAPH_QA_SYSTEM_PROMPT },
+      ...history.slice(-6),
+      {
+        role: 'user',
+        content: `Ontology facts retrieved for this question:\n${context || '(no matching facts found)'}\n\nQuestion: ${question}`,
+      },
+    ];
+    const resp = await this.engine.chat.completions.create({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      messages: messages as any,
+      temperature: 0.2,
+      max_tokens: 600,
+    });
+    return resp.choices[0].message.content ?? '';
   }
 
   async generateClassDescription(classLabel: string, context: string): Promise<string> {

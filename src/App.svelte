@@ -18,6 +18,9 @@
   import GraphPanel from './lib/components/panels/GraphPanel.svelte';
   import OntologyWizard from './lib/components/panels/OntologyWizard.svelte';
   import TutorialsPanel from './lib/components/panels/TutorialsPanel.svelte';
+  import ChatPanel from './lib/components/panels/ChatPanel.svelte';
+  import { serializeOntologyToChunks, retrieve, type GraphChunk } from './lib/ai/rag';
+  import { saveChunks, loadChunks, getChunkMeta } from './lib/storage/db';
   import type { ProposedClass, ProposedIndividual } from './lib/ai/webllm';
 
   // ── AI engine ─────────────────────────────────────────────────────────────
@@ -30,6 +33,7 @@
   // ── UI state ───────────────────────────────────────────────────────────────
   let showWizard = $state(false);
   let showTutorials = $state(false);
+  let showChat = $state(false);
   let showGraph = $state(false);
   let aiRunning = $state(false);
   let aiSuggestion = $state('');
@@ -257,6 +261,37 @@
     error = '';
   }
 
+  // ── Chat (RAG over the ontology) ─────────────────────────────────────────────
+  // Build the chunk index for the current ontology, reusing the IndexedDB copy
+  // unless the ontology has changed since it was last indexed.
+  async function ensureChatIndex(): Promise<GraphChunk[]> {
+    const onto = store.ontology;
+    const meta = await getChunkMeta(onto.id);
+    if (meta && meta.ontologyUpdatedAt === onto.updatedAt) {
+      const cached = await loadChunks(onto.id);
+      if (cached.length) return cached;
+    }
+    const chunks = serializeOntologyToChunks(onto);
+    await saveChunks(onto.id, chunks, onto.updatedAt);
+    return chunks;
+  }
+
+  async function handleChatAsk(
+    question: string,
+    history: { role: 'user' | 'assistant'; content: string }[],
+  ) {
+    modelStatus = 'running';
+    try {
+      const chunks = await ensureChatIndex();
+      const retrieved = retrieve(question, chunks, { maxChunks: 14, seeds: 6 });
+      const context = retrieved.map((c) => `- ${c.text}`).join('\n');
+      const answer = await llm.chatOverContext(question, context, history);
+      return { answer, sources: retrieved.map((c) => ({ label: c.label, kind: c.kind })) };
+    } finally {
+      modelStatus = 'ready';
+    }
+  }
+
   // ── New ontology ───────────────────────────────────────────────────────────
   async function handleNew() {
     if (!confirm('Discard current ontology and start new?')) return;
@@ -288,6 +323,7 @@
     onOpenSettings={() => (showSaved = !showSaved)}
     onNewOntology={handleNew}
     onOpenTutorials={() => (showTutorials = true)}
+    onOpenChat={() => (showChat = true)}
     onImport={handleImport}
     onExportJSON={exportJSON}
     onExportOWL={exportOWL}
@@ -499,6 +535,15 @@
   <TutorialsPanel
     onLoad={handleLoadTutorial}
     onClose={() => (showTutorials = false)}
+  />
+{/if}
+
+{#if showChat}
+  <ChatPanel
+    modelReady={modelStatus === 'ready' || modelStatus === 'running'}
+    ontologyLabel={store.ontology.label}
+    onAsk={handleChatAsk}
+    onClose={() => (showChat = false)}
   />
 {/if}
 

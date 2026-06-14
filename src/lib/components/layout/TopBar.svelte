@@ -10,6 +10,7 @@
     onOpenSettings: () => void;
     onNewOntology: () => void;
     onOpenTutorials: () => void;
+    onOpenChat: () => void;
     onImport: () => void;
     onExportJSON: () => void;
     onExportOWL: () => void;
@@ -20,7 +21,7 @@
   let {
     ontologyLabel, ontologyIRI, modelStatus, modelProgress,
     modelProgressText, selectedModel, onLoadModel,
-    onOpenSettings, onNewOntology, onOpenTutorials, onImport, onExportJSON, onExportOWL,
+    onOpenSettings, onNewOntology, onOpenTutorials, onOpenChat, onImport, onExportJSON, onExportOWL,
   }: Props = $props();
 
   let chosenModel = $state(selectedModel || AVAILABLE_MODELS[0].id);
@@ -71,6 +72,7 @@
   <div class="actions">
     <button class="btn-topbar" onclick={onNewOntology} title="New Ontology">New</button>
     <button class="btn-topbar accent" onclick={onOpenTutorials} title="Load a tutorial ontology">🎓 Tutorials</button>
+    <button class="btn-topbar accent" onclick={onOpenChat} title="Chat with your ontology (RAG)">💬 Chat</button>
     <button class="btn-topbar" onclick={onImport} title="Import">Import</button>
     <div class="export-wrap">
       <button class="btn-topbar" onclick={() => (showExportMenu = !showExportMenu)}>
