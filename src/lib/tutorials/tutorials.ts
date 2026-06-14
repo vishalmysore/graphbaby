@@ -322,6 +322,339 @@ function solarSystemOntology(): Ontology {
   });
 }
 
+// ── Tutorial 4: Ramayana ─────────────────────────────────────────────────────
+
+function ramayanaOntology(): Ontology {
+  return buildOntology({
+    id: 'tutorial_ramayana',
+    iri: 'http://example.org/tutorial/ramayana',
+    label: 'Ramayana Tutorial',
+    description: 'The epic of Rama — model gods, humans, vanaras and rakshasas linked by family, devotion and rivalry.',
+    classes: [
+      { id: 'character', label: 'Character', comment: 'Any being in the epic.' },
+      { id: 'deity', label: 'Deity', parents: ['character'] },
+      { id: 'human', label: 'Human', parents: ['character'] },
+      { id: 'vanara', label: 'Vanara', parents: ['character'], comment: 'The forest-dwelling monkey people.' },
+      { id: 'rakshasa', label: 'Rakshasa', parents: ['character'], comment: 'Demon beings of Lanka.' },
+      { id: 'kingdom', label: 'Kingdom' },
+    ],
+    objectProperties: [
+      { id: 'has_spouse', label: 'hasSpouse', domain: ['character'], range: ['character'], characteristics: ['Symmetric'] },
+      { id: 'has_parent', label: 'hasParent', domain: ['character'], range: ['character'], inverseOf: 'has_child' },
+      { id: 'has_child', label: 'hasChild', domain: ['character'], range: ['character'], inverseOf: 'has_parent' },
+      { id: 'has_sibling', label: 'hasSibling', domain: ['character'], range: ['character'], characteristics: ['Symmetric'] },
+      { id: 'ally_of', label: 'allyOf', domain: ['character'], range: ['character'], characteristics: ['Symmetric'] },
+      { id: 'enemy_of', label: 'enemyOf', domain: ['character'], range: ['character'], characteristics: ['Symmetric'] },
+      { id: 'devotee_of', label: 'devoteeOf', domain: ['character'], range: ['character'] },
+      { id: 'avatar_of', label: 'avatarOf', domain: ['character'], range: ['deity'] },
+      { id: 'rules', label: 'rules', domain: ['character'], range: ['kingdom'] },
+    ],
+    dataProperties: [
+      { id: 'has_epithet', label: 'hasEpithet', domain: ['character'], range: ['xsd:string'] },
+      { id: 'is_immortal', label: 'isImmortal', domain: ['character'], range: ['xsd:boolean'], functional: true },
+    ],
+    individuals: [
+      { id: 'vishnu', label: 'Vishnu', types: ['deity'], dataAssertions: [{ property: 'is_immortal', value: 'true', type: 'xsd:boolean' }] },
+      {
+        id: 'rama', label: 'Rama', types: ['human'],
+        objectAssertions: [
+          { property: 'avatar_of', target: 'vishnu' },
+          { property: 'has_spouse', target: 'sita' },
+          { property: 'has_parent', target: 'dasharatha' },
+          { property: 'has_sibling', target: 'lakshmana' },
+          { property: 'has_sibling', target: 'bharata' },
+          { property: 'has_sibling', target: 'shatrughna' },
+          { property: 'enemy_of', target: 'ravana' },
+          { property: 'rules', target: 'ayodhya' },
+        ],
+        dataAssertions: [{ property: 'has_epithet', value: 'Maryada Purushottama' }],
+      },
+      {
+        id: 'sita', label: 'Sita', types: ['human'],
+        objectAssertions: [
+          { property: 'has_spouse', target: 'rama' },
+          { property: 'has_parent', target: 'janaka' },
+        ],
+        dataAssertions: [{ property: 'has_epithet', value: 'Janaki' }],
+      },
+      {
+        id: 'lakshmana', label: 'Lakshmana', types: ['human'],
+        objectAssertions: [
+          { property: 'has_sibling', target: 'rama' },
+          { property: 'has_parent', target: 'dasharatha' },
+          { property: 'ally_of', target: 'rama' },
+        ],
+      },
+      { id: 'bharata', label: 'Bharata', types: ['human'], objectAssertions: [{ property: 'has_sibling', target: 'rama' }, { property: 'has_parent', target: 'dasharatha' }] },
+      { id: 'shatrughna', label: 'Shatrughna', types: ['human'], objectAssertions: [{ property: 'has_sibling', target: 'rama' }, { property: 'has_parent', target: 'dasharatha' }] },
+      {
+        id: 'dasharatha', label: 'Dasharatha', types: ['human'],
+        objectAssertions: [
+          { property: 'has_child', target: 'rama' },
+          { property: 'has_child', target: 'lakshmana' },
+          { property: 'has_child', target: 'bharata' },
+          { property: 'has_child', target: 'shatrughna' },
+          { property: 'rules', target: 'ayodhya' },
+        ],
+      },
+      { id: 'janaka', label: 'Janaka', types: ['human'], objectAssertions: [{ property: 'has_child', target: 'sita' }, { property: 'rules', target: 'mithila' }] },
+      {
+        id: 'hanuman', label: 'Hanuman', types: ['vanara'],
+        objectAssertions: [
+          { property: 'devotee_of', target: 'rama' },
+          { property: 'ally_of', target: 'rama' },
+        ],
+        dataAssertions: [
+          { property: 'has_epithet', value: 'Bajrangbali' },
+          { property: 'is_immortal', value: 'true', type: 'xsd:boolean' },
+        ],
+      },
+      {
+        id: 'sugriva', label: 'Sugriva', types: ['vanara'],
+        objectAssertions: [
+          { property: 'ally_of', target: 'rama' },
+          { property: 'has_sibling', target: 'vali' },
+          { property: 'rules', target: 'kishkindha' },
+        ],
+      },
+      { id: 'vali', label: 'Vali', types: ['vanara'], objectAssertions: [{ property: 'has_sibling', target: 'sugriva' }] },
+      {
+        id: 'ravana', label: 'Ravana', types: ['rakshasa'],
+        objectAssertions: [
+          { property: 'enemy_of', target: 'rama' },
+          { property: 'has_sibling', target: 'vibhishana' },
+          { property: 'has_sibling', target: 'kumbhakarna' },
+          { property: 'rules', target: 'lanka' },
+        ],
+        dataAssertions: [{ property: 'has_epithet', value: 'Dashanana (the ten-headed)' }],
+      },
+      {
+        id: 'vibhishana', label: 'Vibhishana', types: ['rakshasa'],
+        objectAssertions: [
+          { property: 'ally_of', target: 'rama' },
+          { property: 'has_sibling', target: 'ravana' },
+        ],
+      },
+      { id: 'kumbhakarna', label: 'Kumbhakarna', types: ['rakshasa'], objectAssertions: [{ property: 'has_sibling', target: 'ravana' }] },
+      { id: 'ayodhya', label: 'Ayodhya', types: ['kingdom'] },
+      { id: 'mithila', label: 'Mithila', types: ['kingdom'] },
+      { id: 'kishkindha', label: 'Kishkindha', types: ['kingdom'] },
+      { id: 'lanka', label: 'Lanka', types: ['kingdom'] },
+    ],
+  });
+}
+
+// ── Tutorial 5: Mahabharata ──────────────────────────────────────────────────
+
+function mahabharataOntology(): Ontology {
+  return buildOntology({
+    id: 'tutorial_mahabharata',
+    iri: 'http://example.org/tutorial/mahabharata',
+    label: 'Mahabharata Tutorial',
+    description: 'The great war of Kurukshetra — Pandavas, Kauravas and Krishna, woven together by kinship, alliance and enmity.',
+    classes: [
+      { id: 'character', label: 'Character', comment: 'Any being in the epic.' },
+      { id: 'pandava', label: 'Pandava', parents: ['character'], comment: 'The five sons of Pandu.', disjointWith: ['kaurava'] },
+      { id: 'kaurava', label: 'Kaurava', parents: ['character'], comment: 'The sons of Dhritarashtra.', disjointWith: ['pandava'] },
+      { id: 'deity', label: 'Deity', parents: ['character'] },
+      { id: 'kingdom', label: 'Kingdom' },
+      { id: 'battle', label: 'Battle' },
+    ],
+    objectProperties: [
+      { id: 'has_spouse', label: 'hasSpouse', domain: ['character'], range: ['character'], characteristics: ['Symmetric'] },
+      { id: 'has_parent', label: 'hasParent', domain: ['character'], range: ['character'], inverseOf: 'has_child' },
+      { id: 'has_child', label: 'hasChild', domain: ['character'], range: ['character'], inverseOf: 'has_parent' },
+      { id: 'has_sibling', label: 'hasSibling', domain: ['character'], range: ['character'], characteristics: ['Symmetric'] },
+      { id: 'ally_of', label: 'allyOf', domain: ['character'], range: ['character'], characteristics: ['Symmetric'] },
+      { id: 'enemy_of', label: 'enemyOf', domain: ['character'], range: ['character'], characteristics: ['Symmetric'] },
+      { id: 'charioteer_of', label: 'charioteerOf', domain: ['character'], range: ['character'] },
+      { id: 'mentor_of', label: 'mentorOf', domain: ['character'], range: ['character'] },
+      { id: 'avatar_of', label: 'avatarOf', domain: ['character'], range: ['deity'] },
+      { id: 'rules', label: 'rules', domain: ['character'], range: ['kingdom'] },
+      { id: 'fought_in', label: 'foughtIn', domain: ['character'], range: ['battle'] },
+    ],
+    dataProperties: [
+      { id: 'has_epithet', label: 'hasEpithet', domain: ['character'], range: ['xsd:string'] },
+    ],
+    individuals: [
+      { id: 'vishnu', label: 'Vishnu', types: ['deity'] },
+      {
+        id: 'krishna', label: 'Krishna', types: ['character'],
+        objectAssertions: [
+          { property: 'avatar_of', target: 'vishnu' },
+          { property: 'charioteer_of', target: 'arjuna' },
+          { property: 'ally_of', target: 'arjuna' },
+        ],
+        dataAssertions: [{ property: 'has_epithet', value: 'Govinda' }],
+      },
+      {
+        id: 'yudhishthira', label: 'Yudhishthira', types: ['pandava'],
+        objectAssertions: [
+          { property: 'has_sibling', target: 'bhima' },
+          { property: 'has_sibling', target: 'arjuna' },
+          { property: 'has_sibling', target: 'nakula' },
+          { property: 'has_sibling', target: 'sahadeva' },
+          { property: 'has_parent', target: 'pandu' },
+          { property: 'has_parent', target: 'kunti' },
+          { property: 'has_spouse', target: 'draupadi' },
+          { property: 'enemy_of', target: 'duryodhana' },
+          { property: 'rules', target: 'indraprastha' },
+          { property: 'fought_in', target: 'kurukshetra' },
+        ],
+        dataAssertions: [{ property: 'has_epithet', value: 'Dharmaraja' }],
+      },
+      {
+        id: 'bhima', label: 'Bhima', types: ['pandava'],
+        objectAssertions: [
+          { property: 'has_sibling', target: 'yudhishthira' },
+          { property: 'has_parent', target: 'pandu' },
+          { property: 'has_parent', target: 'kunti' },
+          { property: 'has_spouse', target: 'draupadi' },
+          { property: 'fought_in', target: 'kurukshetra' },
+        ],
+      },
+      {
+        id: 'arjuna', label: 'Arjuna', types: ['pandava'],
+        objectAssertions: [
+          { property: 'has_sibling', target: 'yudhishthira' },
+          { property: 'has_parent', target: 'pandu' },
+          { property: 'has_parent', target: 'kunti' },
+          { property: 'has_spouse', target: 'draupadi' },
+          { property: 'ally_of', target: 'krishna' },
+          { property: 'enemy_of', target: 'karna' },
+          { property: 'fought_in', target: 'kurukshetra' },
+        ],
+        dataAssertions: [{ property: 'has_epithet', value: 'Partha' }],
+      },
+      {
+        id: 'nakula', label: 'Nakula', types: ['pandava'],
+        objectAssertions: [
+          { property: 'has_sibling', target: 'yudhishthira' },
+          { property: 'has_parent', target: 'pandu' },
+          { property: 'has_spouse', target: 'draupadi' },
+          { property: 'fought_in', target: 'kurukshetra' },
+        ],
+      },
+      {
+        id: 'sahadeva', label: 'Sahadeva', types: ['pandava'],
+        objectAssertions: [
+          { property: 'has_sibling', target: 'yudhishthira' },
+          { property: 'has_parent', target: 'pandu' },
+          { property: 'has_spouse', target: 'draupadi' },
+          { property: 'fought_in', target: 'kurukshetra' },
+        ],
+      },
+      {
+        id: 'draupadi', label: 'Draupadi', types: ['character'],
+        objectAssertions: [
+          { property: 'has_spouse', target: 'yudhishthira' },
+          { property: 'has_spouse', target: 'bhima' },
+          { property: 'has_spouse', target: 'arjuna' },
+          { property: 'has_spouse', target: 'nakula' },
+          { property: 'has_spouse', target: 'sahadeva' },
+        ],
+        dataAssertions: [{ property: 'has_epithet', value: 'Panchali' }],
+      },
+      {
+        id: 'kunti', label: 'Kunti', types: ['character'],
+        objectAssertions: [
+          { property: 'has_child', target: 'yudhishthira' },
+          { property: 'has_child', target: 'bhima' },
+          { property: 'has_child', target: 'arjuna' },
+          { property: 'has_child', target: 'karna' },
+        ],
+      },
+      {
+        id: 'pandu', label: 'Pandu', types: ['character'],
+        objectAssertions: [
+          { property: 'has_child', target: 'yudhishthira' },
+          { property: 'has_child', target: 'bhima' },
+          { property: 'has_child', target: 'arjuna' },
+          { property: 'has_child', target: 'nakula' },
+          { property: 'has_child', target: 'sahadeva' },
+          { property: 'has_sibling', target: 'dhritarashtra' },
+        ],
+      },
+      {
+        id: 'dhritarashtra', label: 'Dhritarashtra', types: ['character'],
+        objectAssertions: [
+          { property: 'has_child', target: 'duryodhana' },
+          { property: 'has_child', target: 'dushasana' },
+          { property: 'has_sibling', target: 'pandu' },
+          { property: 'has_spouse', target: 'gandhari' },
+          { property: 'rules', target: 'hastinapura' },
+        ],
+      },
+      {
+        id: 'gandhari', label: 'Gandhari', types: ['character'],
+        objectAssertions: [
+          { property: 'has_child', target: 'duryodhana' },
+          { property: 'has_child', target: 'dushasana' },
+          { property: 'has_spouse', target: 'dhritarashtra' },
+        ],
+      },
+      {
+        id: 'duryodhana', label: 'Duryodhana', types: ['kaurava'],
+        objectAssertions: [
+          { property: 'has_sibling', target: 'dushasana' },
+          { property: 'has_parent', target: 'dhritarashtra' },
+          { property: 'has_parent', target: 'gandhari' },
+          { property: 'enemy_of', target: 'yudhishthira' },
+          { property: 'ally_of', target: 'karna' },
+          { property: 'ally_of', target: 'shakuni' },
+          { property: 'fought_in', target: 'kurukshetra' },
+        ],
+        dataAssertions: [{ property: 'has_epithet', value: 'Suyodhana' }],
+      },
+      {
+        id: 'dushasana', label: 'Dushasana', types: ['kaurava'],
+        objectAssertions: [
+          { property: 'has_sibling', target: 'duryodhana' },
+          { property: 'has_parent', target: 'dhritarashtra' },
+          { property: 'fought_in', target: 'kurukshetra' },
+        ],
+      },
+      {
+        id: 'bhishma', label: 'Bhishma', types: ['character'],
+        objectAssertions: [
+          { property: 'ally_of', target: 'duryodhana' },
+          { property: 'fought_in', target: 'kurukshetra' },
+        ],
+        dataAssertions: [{ property: 'has_epithet', value: 'Pitamaha (the grandsire)' }],
+      },
+      {
+        id: 'drona', label: 'Drona', types: ['character'],
+        objectAssertions: [
+          { property: 'mentor_of', target: 'arjuna' },
+          { property: 'mentor_of', target: 'duryodhana' },
+          { property: 'ally_of', target: 'duryodhana' },
+          { property: 'fought_in', target: 'kurukshetra' },
+        ],
+      },
+      {
+        id: 'karna', label: 'Karna', types: ['character'],
+        objectAssertions: [
+          { property: 'has_parent', target: 'kunti' },
+          { property: 'ally_of', target: 'duryodhana' },
+          { property: 'enemy_of', target: 'arjuna' },
+          { property: 'fought_in', target: 'kurukshetra' },
+        ],
+        dataAssertions: [{ property: 'has_epithet', value: 'Radheya' }],
+      },
+      {
+        id: 'shakuni', label: 'Shakuni', types: ['character'],
+        objectAssertions: [
+          { property: 'ally_of', target: 'duryodhana' },
+          { property: 'fought_in', target: 'kurukshetra' },
+        ],
+      },
+      { id: 'hastinapura', label: 'Hastinapura', types: ['kingdom'] },
+      { id: 'indraprastha', label: 'Indraprastha', types: ['kingdom'] },
+      { id: 'kurukshetra', label: 'Kurukshetra War', types: ['battle'] },
+    ],
+  });
+}
+
 // ── Public catalogue ─────────────────────────────────────────────────────────
 
 export const TUTORIALS: Tutorial[] = [
@@ -363,5 +696,31 @@ export const TUTORIALS: Tutorial[] = [
       'Five individuals from the Sun to Pluto',
     ],
     build: solarSystemOntology,
+  },
+  {
+    id: 'tutorial_ramayana',
+    title: 'Ramayana',
+    icon: '🏹',
+    difficulty: 'Advanced',
+    description: 'The epic of Rama, told as an ontology. Gods, humans, vanaras and rakshasas connected by family ties, devotion, alliances and the great rivalry with Ravana.',
+    highlights: [
+      'Four character types (deity, human, vanara, rakshasa)',
+      'Rich relationships: family, allyOf, enemyOf, devoteeOf, avatarOf',
+      '17 individuals from Rama and Sita to Hanuman and Ravana',
+    ],
+    build: ramayanaOntology,
+  },
+  {
+    id: 'tutorial_mahabharata',
+    title: 'Mahabharata',
+    icon: '⚔️',
+    difficulty: 'Advanced',
+    description: 'The Kurukshetra war as a knowledge graph. The Pandavas, Kauravas and Krishna tied together by kinship, mentorship, alliance and enmity — all converging on one battle.',
+    highlights: [
+      'Pandava vs Kaurava disjoint classes',
+      'charioteerOf, mentorOf and foughtIn relationships',
+      '20 individuals centered on the Kurukshetra War',
+    ],
+    build: mahabharataOntology,
   },
 ];
