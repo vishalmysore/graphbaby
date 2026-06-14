@@ -1,18 +1,18 @@
 # Ontologies, Knowledge Graphs, and Artificial Intelligence
 
-> Why I built **GraphBaby** — a hands-on experiment to see how these three ideas interchange, blur, and reinforce each other.
+> **GraphBaby is not a production tool — it's my experiment** to find out whether an LLM running entirely in the browser (via WebLLM) can bridge ontologies, knowledge graphs, and AI well enough to be useful.
 
 ---
 
-## 1. Why I built this
+## 1. The experiment
 
-I kept running into the same three words — **ontology**, **knowledge graph**, and **artificial intelligence** — used as if they were interchangeable. They are related, they overlap, and they are constantly confused, but they are *not* the same thing. I didn't want to settle the question with another diagram in a slide deck; I wanted to *feel* where one ends and the next begins.
+Three words keep getting used as if they mean the same thing: **ontology**, **knowledge graph**, and **artificial intelligence**. They are related and they overlap, but they are not the same — and I wanted to understand the seams between them by building something, not by reading another definition.
 
-So I built **GraphBaby**: a fully client-side AI tool that turns plain text into an interactive knowledge graph, right in the browser. The whole point was to put all three concepts in one place and watch them interact — an AI model doing the extraction, a knowledge graph holding the result, and the open question of how much *ontology* I'd need to make any of it trustworthy.
+The specific question I set out to test was narrow and practical: **can [WebLLM](https://github.com/mlc-ai/web-llm) — a large language model running 100% in the browser, no server, no cloud inference — take raw text and produce a usable knowledge graph?** And if it can, *where does it need an ontology to keep it honest?*
 
-I describe GraphBaby in its README as "a modern, lightweight, AI-assisted [Protégé](https://protege.stanford.edu/)." Protégé is the most famous *ontology* editor in the world. GraphBaby builds *knowledge graphs* with *AI*. That one sentence is the whole experiment — and this article is what I learned by running it.
+**GraphBaby is the test rig for that question, not a finished product.** It's a small, client-side app that pastes-in text, asks a local LLM to extract entities and relationships, and renders the result as an interactive graph. I built it to watch all three ideas collide in one place — the AI doing the extraction, the knowledge graph holding the output, and the open question of how much ontology I'd need to bolt on before the result was trustworthy. Don't treat it as battle-tested infrastructure; treat it as a probe.
 
-Let's untangle the three properly.
+This article is what the probe taught me. Let's untangle the three properly.
 
 ---
 
