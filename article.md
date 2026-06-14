@@ -16,6 +16,9 @@ I wanted to make the *fundamentals* of ontologies and knowledge graphs easier to
 
 This article uses that little experiment to untangle the three properly. Let's start at the foundation.
 
+![GraphBaby's three-pane OWL editor: class hierarchy tree on the left, entity editor in the centre, usage panel on the right](docs/screenshots/02-ontology-editor.png)
+*GraphBaby's three-pane editor — the class tree (left), the entity editor with its axioms (centre), and a live usage panel (right). Shown here with the bundled **Pizza** tutorial ontology loaded.*
+
 ---
 
 ## 2. What is an ontology?
@@ -57,6 +60,9 @@ A tiny ontology fragment in Turtle (RDF syntax) looks like this:
 
 This says nothing about any *specific* doctor. It describes the **shape of reality** for the medical domain. That is an ontology: **the vocabulary and the rules, divorced from any particular data.**
 
+![The Pizza ontology's class hierarchy rendered as a graph — Pizza, PizzaBase and PizzaTopping branching into their subclasses](docs/screenshots/04-class-graph.png)
+*The schema, visualised: GraphBaby's graph view shows the **class hierarchy** alone — `Pizza`, `PizzaBase` and `PizzaTopping` branching into subclasses, linked by `subClassOf` and property edges. Not a single concrete pizza in sight; this is the blueprint.*
+
 ---
 
 ## 3. What is a knowledge graph?
@@ -79,6 +85,9 @@ For example:
 A knowledge graph answers questions like *"Where did Einstein work?"* by traversing edges. It is **specific, instance-level, and grows by adding more facts.** Google's Knowledge Graph (the info boxes in search results), Wikidata, and enterprise customer-360 graphs are all knowledge graphs: huge collections of concrete entities and relationships.
 
 In GraphBaby these facts live as **individuals** — `Einstein`, `Princeton` — each typed by a class from the ontology and linked by the ontology's object properties. The bare triple is the *idea*; the typed, schema-bound individual is what the tool actually stores. We'll see why that distinction matters in a moment.
+
+![The individual editor showing Arjuna, typed as a Pandava, with object-property assertions to Yudhishthira, Kunti, Draupadi, Krishna and Karna and a hasEpithet data value of "Partha"](docs/screenshots/03-individual-editor.png)
+*An individual is where the facts live. Here `Arjuna` (from the bundled **Mahabharata** tutorial — more on those below) is typed as a `Pandava` and wired up with concrete assertions: `hasParent → Kunti`, `hasSpouse → Draupadi`, `allyOf → Krishna`, `enemyOf → Karna`, `foughtIn → Kurukshetra War`. Every edge points at another real individual; this is the knowledge graph.*
 
 ---
 
@@ -180,7 +189,30 @@ Each step moves from "the AI drafted an ontology" toward "the ontology actively 
 
 ---
 
-## 7. When do you actually need which?
+## 7. Try it without typing a word: the tutorial ontologies
+
+Pasting text is the headline feature — but it assumes you already *have* the text, and a loaded model. To make the *ideas* explorable in a single click, GraphBaby ships a set of **prepopulated tutorial ontologies**. Open **🎓 Tutorials**, pick one, and a complete, self-consistent OWL ontology drops straight into the editor: no model download, no pasting, nothing to set up.
+
+![The Tutorials panel showing five cards: Pizza, Family, Solar System, Ramayana and Mahabharata, each with a difficulty badge and entity counts](docs/screenshots/01-tutorials-panel.png)
+*Five ready-made ontologies, from a one-concept warm-up to the full cast of an epic — each loads in one click, with no AI model required.*
+
+They climb in difficulty on purpose:
+
+- **Pizza** — the canonical OWL teaching ontology: a clean three-level class hierarchy with *functional* and *inverse* properties.
+- **Family** — the textbook home of *symmetric* (`hasSpouse`, `hasSibling`), *inverse* (`hasParent`/`hasChild`) and *transitive* (`hasAncestor`) properties.
+- **Solar System** — richer individuals carrying typed numeric data (mass, radius, moon count) and a self-referential `orbits` relationship.
+- **Ramayana** and **Mahabharata** — the two great Indian epics, modelled as knowledge graphs. Here the **individuals** are the whole point: deities, humans, vanaras and rakshasas (or Pandavas, Kauravas and Krishna) bound together by family, devotion, alliance and rivalry.
+
+The epics are where the ontology-versus-knowledge-graph distinction stops being abstract. The **classes** stay a tidy handful — `Character` splitting into `Pandava`, `Kaurava` and `Deity`, plus `Kingdom` and `Battle` — yet those few classes *type* a dense web of **individuals**: the twenty-one figures of the Mahabharata all the way down to the `Kurukshetra War` they converge on.
+
+![The Mahabharata class hierarchy rendered as a graph — Character branching into Pandava, Kaurava and Deity, alongside Kingdom and Battle](docs/screenshots/05-mahabharata-graph.png)
+*Six classes govern the entire epic. The schema is small; the graph of individuals it constrains is large — exactly the split this whole article is about.*
+
+Every tutorial is the genuine `Ontology` structure, so the moment one loads you can edit a class, add an axiom, visualise the graph, or export it to OWL/RDF-XML and open it in a standard tool like Protégé. They are the fastest way to *see* the three concepts in motion before you ever bring your own text.
+
+---
+
+## 8. When do you actually need which?
 
 A practical decision guide from building this:
 
@@ -212,7 +244,7 @@ The mature systems use **all three**: an ontology defines the rules, an AI popul
 
 ---
 
-## 8. The one-paragraph takeaway
+## 9. The one-paragraph takeaway
 
 An **ontology** is the formal schema of a domain — the classes, allowed relationships, and logical rules a machine can *reason* over. A **knowledge graph** is the populated data — concrete entities and the facts linking them. **Artificial intelligence** is the engine that can now turn raw text into *both* in seconds — brilliantly, and without any built-in guarantee of being right. I built **GraphBaby** to put all three in one browser tab and watch them interchange, and the surprise was how far an in-browser LLM gets: it drafts a genuine OWL ontology, then fills it with typed individuals that obey it. Where it stops — *storing* axioms but not *reasoning* over them — is exactly the line between an ontology you can read and an ontology that thinks. The blueprint, the building, and the machine that pours the concrete: you only really see where each one ends once you've watched a single tool try to be all three.
 
