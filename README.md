@@ -118,10 +118,6 @@ type Graph = { nodes: Node[]; edges: Edge[] };
 
 ## Acknowledgements
 
-GraphBaby is **inspired by [Protégé](https://protege.stanford.edu/)**, the ontology editor from Stanford — but it is an independent, clean-room implementation. It contains **no Protégé source code** and is not affiliated with or endorsed by Stanford or the Protégé project.
-
-It implements the open **[OWL 2](https://www.w3.org/TR/owl2-overview/)** and **[RDF](https://www.w3.org/RDF/)** standards published by the W3C, which are free for anyone to implement.
-
 Built on these open-source libraries:
 
 | Library | License |
