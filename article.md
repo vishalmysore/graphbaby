@@ -12,7 +12,7 @@
 
 **[WebLLM](https://github.com/mlc-ai/web-llm)** makes the shift almost absurd: it runs that LLM *entirely in your browser* — no server, no cloud inference, no data leaving your machine. The barrier to turning text into a graph drops to a single paste-and-click.
 
-I wanted to make the *fundamentals* of ontologies and knowledge graphs easier to grasp — not by reading another definition, but by watching them take shape from real text. So I built a small experimental tool, **GraphBaby**, to do exactly that: paste in text, a local LLM extracts entities and relationships, and the result renders as an interactive graph you can poke at. It puts all three in one place — the AI doing the extraction, the knowledge graph holding the output, and the open question of how much ontology you'd need before you could trust any of it.
+I wanted to make the *fundamentals* of ontologies and knowledge graphs easier to grasp — not by reading another definition, but by watching them take shape from real text. So I built a small experimental tool, **GraphBaby**, to do exactly that: paste in text, and a local LLM drafts a real **OWL ontology** — classes, properties, and individuals — which you can then edit, browse as a hierarchy, visualise as a graph, and export. It puts all three in one place: the AI doing the extraction, the ontology supplying the rules, and the individuals that populate it forming a knowledge graph. Where it deliberately *stops* turns out to be just as instructive as what it does — but more on that later.
 
 This article uses that little experiment to untangle the three properly. Let's start at the foundation.
 
@@ -76,15 +76,9 @@ For example:
 (Albert Einstein) --[worked_at]--> (Princeton University)
 ```
 
-This is exactly GraphBaby's internal model. I kept the data structure deliberately minimal:
-
-```ts
-type Node = { id: string; label: string; type?: string };
-type Edge = { source: string; target: string; label: string };
-type Graph = { nodes: Node[]; edges: Edge[] };
-```
-
 A knowledge graph answers questions like *"Where did Einstein work?"* by traversing edges. It is **specific, instance-level, and grows by adding more facts.** Google's Knowledge Graph (the info boxes in search results), Wikidata, and enterprise customer-360 graphs are all knowledge graphs: huge collections of concrete entities and relationships.
+
+In GraphBaby these facts live as **individuals** — `Einstein`, `Princeton` — each typed by a class from the ontology and linked by the ontology's object properties. The bare triple is the *idea*; the typed, schema-bound individual is what the tool actually stores. We'll see why that distinction matters in a moment.
 
 ---
 
@@ -92,16 +86,19 @@ A knowledge graph answers questions like *"Where did Einstein work?"* by travers
 
 Here is the part that makes GraphBaby a 2026 project rather than a 2006 one.
 
-Classically, knowledge graphs were built by **humans** (Wikidata editors) or by **brittle rule-based extractors** (regex, hand-tuned NLP pipelines). The ontology came first, painstakingly authored, and data was poured into its mould.
+Classically, the ontology came first — painstakingly hand-authored by a specialist in an editor like Protégé — and only then was data poured into its mould by human curators or brittle rule-based extractors. Both halves were slow.
 
-GraphBaby inverts that. The **AI does the extraction**: I paste raw, unstructured text, and a local large language model — running entirely in the browser via [WebLLM](https://github.com/mlc-ai/web-llm) on WebGPU — reads it and emits the triples directly. The system prompt is essentially: *"You are a knowledge graph extraction engine. Convert this text into nodes and edges as JSON."*
+GraphBaby hands *both* halves to the AI, in the right order. A local large language model — running entirely in the browser via [WebLLM](https://github.com/mlc-ai/web-llm) on WebGPU — does the work in two passes, and the order is the whole point:
+
+1. **First, draft the schema.** The system prompt is literally *"You are an OWL ontology class hierarchy designer."* The model reads the text and proposes the **classes** and their `subClassOf` hierarchy — the TBox, the ontology itself.
+2. **Then, populate it — under constraint.** A second prompt — *"You are an OWL individual extractor… DO NOT invent new classes"* — feeds the model the *already-approved* classes and properties and asks it to extract **individuals** that fit them. The schema from step 1 becomes the leash on step 2.
 
 This is the crux of the experiment, and it cuts both ways:
 
-- **AI makes knowledge graphs cheap.** What used to need an ontologist and an NLP team is now a paste-and-click. The barrier to a *first* graph collapses to near zero.
-- **AI makes knowledge graphs unreliable.** The model will happily invent a relationship, mislabel an entity's `type`, or merge two things that shouldn't be merged. It has *no* enforced notion of what is allowed — because I gave it no ontology to obey.
+- **AI makes ontologies cheap.** What used to need an ontologist *and* an NLP team is now a paste-and-click. The barrier to a *first* ontology collapses to near zero.
+- **AI on its own is unreliable.** Left unconstrained, the model invents classes, mislabels types, and asserts nonsense relationships. GraphBaby's answer is to let the AI's own first-pass *ontology* discipline its second-pass *extraction* — the schema is the guardrail.
 
-And that is precisely how the three concepts revealed their relationship to me: **AI generates the graph fast and loose; an ontology is what would make the graph correct.** The LLM is the engine; the ontology is the guardrail. The knowledge graph is the thing they fight over.
+And that is exactly how the three concepts revealed their relationship to me: **the AI is the engine, the ontology is the guardrail, and the knowledge graph of individuals is what comes out when you point the first through the second.**
 
 ---
 
@@ -124,8 +121,8 @@ A helpful analogy from databases:
 
 And the crucial relationship between the first two:
 
-- A knowledge graph **can** be built on top of an ontology (then it's a "semantically rich" or "ontology-backed" knowledge graph — it can be validated and reasoned over).
-- A knowledge graph **can also exist without one** — just nodes and edges with free-form labels, no enforced rules. These are sometimes called "labelled property graphs." *This is what GraphBaby produces today.*
+- A knowledge graph **can** be built on top of an ontology (then it's a "semantically rich" or "ontology-backed" knowledge graph — it can be validated and reasoned over). *This is what GraphBaby produces: every individual is typed by an ontology class.*
+- A knowledge graph **can also exist without one** — just nodes and edges with free-form labels, no enforced rules. These are sometimes called "labelled property graphs," and they're what you get from a pure text-to-graph extractor with no schema.
 
 | Dimension | Ontology | Knowledge Graph | AI (LLM) |
 |-----------|----------|-----------------|----------|
@@ -140,43 +137,46 @@ And the crucial relationship between the first two:
 
 ## 6. What GraphBaby actually is — and what running the experiment taught me
 
-GraphBaby is, strictly speaking, an **AI-driven knowledge graph builder, not an ontology editor.** Here is the pipeline I built, mapped to the three concepts:
+When I started, I expected to build a loose text-to-graph sketcher. What the experiment pulled me toward was something stricter: GraphBaby ended up being an **AI-assisted OWL ontology editor** — closer to a browser-based Protégé with an AI front-end than to a casual graph doodler. Here is the pipeline, mapped to the three concepts:
 
-1. **Input** — I paste unstructured text.
-2. **Extraction (AI)** — a local LLM via WebLLM pulls out **entities** and **relationships** as triples, in-browser, no server.
-3. **Render (knowledge graph)** — those triples become an interactive graph drawn with [Sigma.js](https://www.sigmajs.org) and [Graphology](https://graphology.github.io).
-4. **Refine (AI again)** — natural-language commands like *"merge duplicate nodes"* or *"expand this node"* reshape the graph.
-5. **Persist & export** — graphs save to IndexedDB and export as JSON.
+1. **Input** — paste unstructured text.
+2. **Extract the ontology (AI)** — the wizard's first pass drafts the **class hierarchy**; you review and approve it.
+3. **Populate it (AI, constrained)** — the second pass extracts **individuals** that may only use the approved classes and properties.
+4. **Edit like Protégé** — dedicated editors for classes, object properties, data properties, individuals, and **axioms** (`equivalentClasses`, `disjointWith`, property characteristics like `Transitive`/`Symmetric`/`Functional`). A live hierarchy tree shows `owl:Thing` at the root with everything beneath it.
+5. **Visualise & export** — render the graph with [Sigma.js](https://www.sigmajs.org) + [Graphology](https://graphology.github.io), persist to IndexedDB, and export to **JSON or OWL/RDF-XML** (real `owl:Class`, `owl:ObjectProperty`, `rdfs:subClassOf` you could open in Protégé itself).
 
-Notice that my nodes carry an optional `type` field (`Person`, `Concept`, `Organization`…) and edges carry free-form labels (`developed`, `worked_at`). That `type` field is a **whisper of an ontology** — a lightweight nod to "what kind of thing is this" — but GraphBaby does **not** enforce ontological rules. Nothing stops the AI from claiming a `Disease` `worked_at` a `Concept`. There is no reasoner, no OWL axioms, no validation that `treats` only connects medications to diseases.
+So this is *not* a free-floating bag of nodes and edges. Every entity is a typed OWL construct with an IRI. Object properties carry `domain` and `range`. The model captures the genuine axioms — disjointness, equivalence, transitivity, functionality — that separate an ontology from a doodle. The internal type isn't `{ id, label }`; it's a full `Ontology` with `classes`, `objectProperties`, `dataProperties`, `annotationProperties`, and `individuals`.
 
-That gap is not an oversight — **it's the result.** By deliberately leaving the ontology out, I got to watch exactly what AI-plus-knowledge-graph looks like *without* a schema holding it accountable. And the answer is: fast, delightful, and quietly wrong at the edges.
+### The honest limit: it *stores* the logic, it doesn't *reason* over it
+
+Here's where the experiment actually stops — and it's the most interesting boundary of all. GraphBaby will happily let you *declare* that `treats` is `Functional`, or that `Doctor` and `Patient` are `disjointWith` each other. It stores those axioms and exports them. But it does **not run a description-logic reasoner**: it won't *infer* that every Cardiologist is therefore a Person, and it won't flag you if you assert something that contradicts a disjointness axiom. The hierarchy you see is the one that was *asserted*, never an *inferred* one.
+
+That gap is the whole lesson. **Capturing an ontology and reasoning over an ontology are two different things** — and a browser LLM, it turns out, is great at the first and does nothing for the second. The axioms are all dressed up with nowhere to go until a real reasoner (HermiT, Pellet, ELK) consumes the exported OWL.
 
 ### The Protégé contrast
 
-Protégé is where humans *carefully, manually* author ontologies — defining classes, subclass hierarchies, property domains and ranges, then running reasoners to check consistency. It is rigorous, powerful, and, for most people, slow and intimidating.
-
-GraphBaby flips the workflow:
+Protégé is where humans *carefully, manually* author ontologies and run reasoners to check consistency. GraphBaby keeps the OWL model and the editing panels but swaps manual authoring for AI extraction — and leaves the reasoner out:
 
 | | Protégé | GraphBaby |
 |---|---------|-----------|
-| **Authoring** | Human, manual, formal | AI, automatic, from text |
-| **Output** | Rigorous ontology (OWL) | Lightweight knowledge graph (JSON) |
-| **Reasoning** | Full logical inference | None (yet) |
+| **First draft** | Human, manual, formal | AI, from plain text |
+| **Refinement** | Manual OWL editing | Manual OWL editing *and* AI suggestions |
+| **Model** | Full OWL/RDF | OWL-lite (classes, properties, individuals, core axioms) |
+| **Reasoning** | Full DL inference (HermiT, Pellet…) | None — axioms stored & exported, not entailed |
 | **Barrier to entry** | High | Paste text, click a button |
 | **Runs** | Desktop Java app | 100% in a browser tab |
 
-I traded **formal rigor** for **accessibility and speed** — on purpose, to isolate the AI half of the equation.
+The trade I actually made wasn't "drop the ontology for a loose graph." It was "keep the ontology, automate the tedious authoring with an LLM, and stop short of the reasoner."
 
-### Where the ontology earns its way back in
+### What's left to close the loop
 
-The roadmap I set for GraphBaby is essentially "add back the ontology, one disciplined piece at a time, without making the user hand-author OWL":
+The natural next steps are the ones that turn a *stored* ontology into a *reasoning* one:
 
-- **Domain ontology plugins** — pre-defined schemas (medical, legal, academic) that would constrain and enrich the AI's extraction. This is literally bolting an ontology onto the AI.
-- **Path-finding explanations** and a **graph reasoning layer** — the beginnings of *inference*, the defining feature of ontologies.
-- **Multi-document graph merging** — entity resolution, which is far more reliable when an ontology tells you two nodes are the same *kind* of thing.
+- **An in-browser reasoner** — materialise the inferred hierarchy, check consistency, catch disjointness violations. This is the missing third leg.
+- **Domain ontology plugins** — start from a vetted schema (medical, legal, academic) so the AI extends a trusted ontology rather than inventing one each time.
+- **Multi-document merging** — entity resolution across texts, far more reliable when the ontology says two individuals are the same *kind* of thing.
 
-Each of those is a step from "AI guesses a graph" toward "AI fills in a graph whose rules are guaranteed." That arc — from loose to grounded — is the whole reason I started the project.
+Each step moves from "the AI drafted an ontology" toward "the ontology actively governs and corrects the data." That arc — from *captured* to *enforced* — is the whole reason the project is interesting to me.
 
 ---
 
@@ -184,30 +184,37 @@ Each of those is a step from "AI guesses a graph" toward "AI fills in a graph wh
 
 A practical decision guide from building this:
 
-**Lean on AI + a plain knowledge graph when you want to:**
+**A plain knowledge graph (no schema) is enough when you want to:**
 - Explore connections in a body of text fast
 - Build a quick mental map of a topic
 - Power a "related items" feature
 - Move fast and tolerate some messiness
 
-→ *This is GraphBaby's sweet spot.*
+→ *A pure text-to-graph extractor will do.*
 
-**Invest in an ontology when you need to:**
-- Guarantee consistency across many data sources
-- Run automated reasoning ("infer all the cardiologists")
-- Validate AI-generated data against strict rules
+**You want a real ontology underneath when you need to:**
+- Type and constrain your data so the AI can't assert nonsense
+- Guarantee consistency across many documents or sources
 - Share an unambiguous vocabulary across teams (interoperability)
-- Operate in regulated, high-stakes domains (healthcare, finance, law)
+- Export to standards (OWL/RDF) that other tools can consume
+- Operate in domains where structure matters (healthcare, legal, research)
 
-→ *This is Protégé / OWL / SHACL territory — and where AI extraction most needs a leash.*
+→ *This is GraphBaby's actual sweet spot — and Protégé's home turf.*
 
-The mature systems use **all three**: an ontology defines the rules, an AI populates a knowledge graph at scale, and a reasoner keeps the result honest.
+**You additionally need a reasoner when you need to:**
+- *Infer* facts nobody wrote down ("find all the cardiologists")
+- Validate that asserted facts don't violate the axioms
+- Detect inconsistency automatically
+
+→ *This is the one piece GraphBaby leaves to an external OWL reasoner.*
+
+The mature systems use **all three**: an ontology defines the rules, an AI populates it at scale, and a reasoner keeps the result honest. GraphBaby nails the first two and stops cleanly at the third.
 
 ---
 
 ## 8. The one-paragraph takeaway
 
-An **ontology** is the formal schema of a domain — the classes, allowed relationships, and logical rules a machine can *reason* over. A **knowledge graph** is the populated data — concrete entities and the facts linking them. **Artificial intelligence** is the engine that can turn raw text into that data in seconds — brilliantly, and without any built-in guarantee of being right. I built **GraphBaby** to put all three in one browser tab and watch them interchange: the AI builds knowledge graphs from text effortlessly, and the absence of an ontology is exactly what shows you why ontologies exist. The blueprint, the building, and the machine that pours the concrete — you only really understand each one once you've tried to build with just two of them.
+An **ontology** is the formal schema of a domain — the classes, allowed relationships, and logical rules a machine can *reason* over. A **knowledge graph** is the populated data — concrete entities and the facts linking them. **Artificial intelligence** is the engine that can now turn raw text into *both* in seconds — brilliantly, and without any built-in guarantee of being right. I built **GraphBaby** to put all three in one browser tab and watch them interchange, and the surprise was how far an in-browser LLM gets: it drafts a genuine OWL ontology, then fills it with typed individuals that obey it. Where it stops — *storing* axioms but not *reasoning* over them — is exactly the line between an ontology you can read and an ontology that thinks. The blueprint, the building, and the machine that pours the concrete: you only really see where each one ends once you've watched a single tool try to be all three.
 
 ---
 
