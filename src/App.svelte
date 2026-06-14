@@ -85,10 +85,13 @@
   }
 
   // ── Wizard handlers ────────────────────────────────────────────────────────
-  async function handleExtractClasses(text: string): Promise<ProposedClass[]> {
+  async function handleExtractClasses(
+    text: string,
+    onToken?: (full: string) => void,
+  ): Promise<ProposedClass[]> {
     modelStatus = 'running'; aiRunning = true;
     try {
-      return await llm.extractClassHierarchy(text, store.ontology.iri);
+      return await llm.extractClassHierarchy(text, store.ontology.iri, onToken);
     } finally {
       modelStatus = 'ready'; aiRunning = false;
     }
@@ -116,13 +119,16 @@
     store.setActiveTab('class');
   }
 
-  async function handleExtractIndividuals(text: string): Promise<ProposedIndividual[]> {
+  async function handleExtractIndividuals(
+    text: string,
+    onToken?: (full: string) => void,
+  ): Promise<ProposedIndividual[]> {
     modelStatus = 'running'; aiRunning = true;
     try {
       const classes = Object.values(store.ontology.classes).map((c) => ({ id: c.id, label: c.label }));
       const ops = Object.values(store.ontology.objectProperties).map((p) => ({ id: p.id, label: p.label }));
       const dps = Object.values(store.ontology.dataProperties).map((p) => ({ id: p.id, label: p.label }));
-      return await llm.extractIndividuals(text, classes, ops, dps);
+      return await llm.extractIndividuals(text, classes, ops, dps, onToken);
     } finally {
       modelStatus = 'ready'; aiRunning = false;
     }

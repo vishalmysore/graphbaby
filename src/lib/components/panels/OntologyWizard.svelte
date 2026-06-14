@@ -6,9 +6,9 @@
     modelReady: boolean;
     running: boolean;
     ontology: Ontology;
-    onExtractClasses: (text: string) => Promise<ProposedClass[]>;
+    onExtractClasses: (text: string, onToken?: (full: string) => void) => Promise<ProposedClass[]>;
     onApplyClasses: (classes: ProposedClass[]) => void;
-    onExtractIndividuals: (text: string) => Promise<ProposedIndividual[]>;
+    onExtractIndividuals: (text: string, onToken?: (full: string) => void) => Promise<ProposedIndividual[]>;
     onApplyIndividuals: (individuals: ProposedIndividual[]) => void;
     onClose: () => void;
   }
@@ -29,6 +29,14 @@
   let proposedIndividuals = $state<ProposedIndividual[]>([]);
   let error = $state('');
   let busy = $state(false);
+  let streamText = $state('');
+  let streamEl = $state<HTMLPreElement | null>(null);
+
+  // Auto-scroll the live token feed to the bottom as it grows.
+  $effect(() => {
+    streamText;
+    if (streamEl) streamEl.scrollTop = streamEl.scrollHeight;
+  });
 
   // Has the ontology any real classes beyond owl:Thing?
   const hasClasses = $derived(
@@ -57,9 +65,9 @@
 
   // ── Actions ────────────────────────────────────────────────────────────────
   async function runExtractClasses() {
-    busy = true; error = '';
+    busy = true; error = ''; streamText = '';
     try {
-      proposedClasses = await onExtractClasses(text);
+      proposedClasses = await onExtractClasses(text, (full) => { streamText = full; });
       step = 'preview_classes';
     } catch (e) {
       error = String(e);
@@ -75,9 +83,9 @@
   }
 
   async function runExtractIndividuals() {
-    busy = true; error = '';
+    busy = true; error = ''; streamText = '';
     try {
-      proposedIndividuals = await onExtractIndividuals(indText);
+      proposedIndividuals = await onExtractIndividuals(indText, (full) => { streamText = full; });
       if (proposedIndividuals.length === 0) {
         error = 'No individuals found. Try pasting more detailed text with named entities.';
       } else {
@@ -114,6 +122,19 @@
 </script>
 
 <!-- ── Overlay ──────────────────────────────────────────────────────────────── -->
+{#snippet streamPanel()}
+  {#if busy}
+    <div class="stream-panel">
+      <div class="stream-head">
+        <span class="live-dot"></span>
+        <span class="stream-label">Model is generating…</span>
+        <span class="stream-count">{streamText.length} chars</span>
+      </div>
+      <pre class="stream-body" bind:this={streamEl}>{streamText || 'Waiting for the first tokens…'}</pre>
+    </div>
+  {/if}
+{/snippet}
+
 <div class="overlay" role="dialog" aria-modal="true">
   <div class="modal">
 
@@ -188,6 +209,7 @@ Examples:
         </label>
 
         {#if error}<div class="error">{error}</div>{/if}
+        {@render streamPanel()}
       </div>
 
       <div class="modal-footer">
@@ -285,6 +307,7 @@ The AI will assign each individual to one of your defined classes."
         </label>
 
         {#if error}<div class="error">{error}</div>{/if}
+        {@render streamPanel()}
       </div>
 
       <div class="modal-footer">
@@ -460,6 +483,15 @@ The AI will assign each individual to one of your defined classes."
   textarea:focus { outline: none; border-color: #3b5998; }
 
   .error { background: #fde8e8; border: 1px solid #fca5a5; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #c0392b; }
+
+  /* Live streaming token feed */
+  .stream-panel { border: 1px solid #c7d6f7; border-radius: 8px; overflow: hidden; }
+  .stream-head { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: #1e293b; color: #cbd5e1; font-size: 11px; }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; animation: streampulse 1.2s infinite; }
+  .stream-label { font-weight: 600; }
+  .stream-count { margin-left: auto; opacity: .7; font-variant-numeric: tabular-nums; }
+  .stream-body { margin: 0; padding: 10px 12px; max-height: 170px; overflow-y: auto; background: #0f172a; color: #93e6b0; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+  @keyframes streampulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
 
   /* Class preview */
   .preview-hint { font-size: 13px; color: #374151; }

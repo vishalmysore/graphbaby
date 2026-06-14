@@ -81,11 +81,15 @@ export class WebLLMEngine {
   }
 
   /** Step 1 of wizard: extract ONLY class hierarchy from domain text */
-  async extractClassHierarchy(text: string, baseIRI: string): Promise<ProposedClass[]> {
+  async extractClassHierarchy(
+    text: string,
+    baseIRI: string,
+    onToken?: (full: string) => void,
+  ): Promise<ProposedClass[]> {
     if (!this.engine) throw new Error('Model not loaded');
 
-    const resp = await this.engine.chat.completions.create({
-      messages: [
+    const full = await this.streamCompletion(
+      [
         {
           role: 'system',
           content: `You are an OWL ontology class hierarchy designer.
@@ -102,11 +106,11 @@ Rules:
         },
         { role: 'user', content: `Extract the class hierarchy for this domain:\n\n${text}` },
       ],
-      temperature: 0.1,
-      max_tokens: 1500,
-    });
+      { temperature: 0.1, max_tokens: 1500 },
+      onToken,
+    );
 
-    return parseProposedClasses(resp.choices[0].message.content ?? '', baseIRI);
+    return parseProposedClasses(full, baseIRI);
   }
 
   /** Step 2 of wizard: extract individuals using already-approved classes */
@@ -115,6 +119,7 @@ Rules:
     classes: { id: string; label: string }[],
     objectProps: { id: string; label: string }[],
     dataProps: { id: string; label: string }[],
+    onToken?: (full: string) => void,
   ): Promise<ProposedIndividual[]> {
     if (!this.engine) throw new Error('Model not loaded');
 
@@ -122,8 +127,8 @@ Rules:
     const opStr = objectProps.map((p) => `"${p.id}" (${p.label})`).join(', ') || 'none';
     const dpStr = dataProps.map((p) => `"${p.id}" (${p.label})`).join(', ') || 'none';
 
-    const resp = await this.engine.chat.completions.create({
-      messages: [
+    const full = await this.streamCompletion(
+      [
         {
           role: 'system',
           content: `You are an OWL individual (instance) extractor.
@@ -151,11 +156,40 @@ Rules:
         },
         { role: 'user', content: `Extract individuals from this text:\n\n${text}` },
       ],
-      temperature: 0.1,
-      max_tokens: 2500,
-    });
+      { temperature: 0.1, max_tokens: 2500 },
+      onToken,
+    );
 
-    return parseProposedIndividuals(resp.choices[0].message.content ?? '');
+    return parseProposedIndividuals(full);
+  }
+
+  /**
+   * Run a streaming chat completion, invoking `onToken` with the accumulated
+   * text after each chunk so callers can show live progress. Returns the full
+   * concatenated text once the stream ends.
+   */
+  private async streamCompletion(
+    messages: { role: 'system' | 'user' | 'assistant'; content: string }[],
+    opts: { temperature: number; max_tokens: number },
+    onToken?: (full: string) => void,
+  ): Promise<string> {
+    if (!this.engine) throw new Error('Model not loaded');
+    const stream = await this.engine.chat.completions.create({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      messages: messages as any,
+      temperature: opts.temperature,
+      max_tokens: opts.max_tokens,
+      stream: true,
+    });
+    let full = '';
+    for await (const chunk of stream) {
+      const delta = chunk.choices[0]?.delta?.content ?? '';
+      if (delta) {
+        full += delta;
+        onToken?.(full);
+      }
+    }
+    return full;
   }
 
   /** RAG chat: answer a question grounded on retrieved ontology facts. */
