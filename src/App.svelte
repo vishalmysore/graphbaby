@@ -17,6 +17,7 @@
   import UsagePanel from './lib/components/panels/UsagePanel.svelte';
   import GraphPanel from './lib/components/panels/GraphPanel.svelte';
   import OntologyWizard from './lib/components/panels/OntologyWizard.svelte';
+  import TutorialsPanel from './lib/components/panels/TutorialsPanel.svelte';
   import type { ProposedClass, ProposedIndividual } from './lib/ai/webllm';
 
   // ── AI engine ─────────────────────────────────────────────────────────────
@@ -28,6 +29,7 @@
 
   // ── UI state ───────────────────────────────────────────────────────────────
   let showWizard = $state(false);
+  let showTutorials = $state(false);
   let showGraph = $state(false);
   let aiRunning = $state(false);
   let aiSuggestion = $state('');
@@ -244,6 +246,17 @@
     input.click();
   }
 
+  // ── Tutorials ──────────────────────────────────────────────────────────────
+  async function handleLoadTutorial(onto: Ontology) {
+    store.loadOntology(onto);
+    await saveOntology(onto);
+    savedOntologies = await loadOntologies();
+    store.setActiveTab('class');
+    showGraph = false;
+    aiSuggestion = '';
+    error = '';
+  }
+
   // ── New ontology ───────────────────────────────────────────────────────────
   async function handleNew() {
     if (!confirm('Discard current ontology and start new?')) return;
@@ -274,6 +287,7 @@
     onLoadModel={handleLoadModel}
     onOpenSettings={() => (showSaved = !showSaved)}
     onNewOntology={handleNew}
+    onOpenTutorials={() => (showTutorials = true)}
     onImport={handleImport}
     onExportJSON={exportJSON}
     onExportOWL={exportOWL}
@@ -478,6 +492,13 @@
     onExtractIndividuals={handleExtractIndividuals}
     onApplyIndividuals={handleApplyIndividuals}
     onClose={() => (showWizard = false)}
+  />
+{/if}
+
+{#if showTutorials}
+  <TutorialsPanel
+    onLoad={handleLoadTutorial}
+    onClose={() => (showTutorials = false)}
   />
 {/if}
 

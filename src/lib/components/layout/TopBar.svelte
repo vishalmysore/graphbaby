@@ -9,6 +9,7 @@
     onLoadModel: (id: string) => void;
     onOpenSettings: () => void;
     onNewOntology: () => void;
+    onOpenTutorials: () => void;
     onImport: () => void;
     onExportJSON: () => void;
     onExportOWL: () => void;
@@ -19,7 +20,7 @@
   let {
     ontologyLabel, ontologyIRI, modelStatus, modelProgress,
     modelProgressText, selectedModel, onLoadModel,
-    onOpenSettings, onNewOntology, onImport, onExportJSON, onExportOWL,
+    onOpenSettings, onNewOntology, onOpenTutorials, onImport, onExportJSON, onExportOWL,
   }: Props = $props();
 
   let chosenModel = $state(selectedModel || AVAILABLE_MODELS[0].id);
@@ -69,6 +70,7 @@
 
   <div class="actions">
     <button class="btn-topbar" onclick={onNewOntology} title="New Ontology">New</button>
+    <button class="btn-topbar accent" onclick={onOpenTutorials} title="Load a tutorial ontology">🎓 Tutorials</button>
     <button class="btn-topbar" onclick={onImport} title="Import">Import</button>
     <div class="export-wrap">
       <button class="btn-topbar" onclick={() => (showExportMenu = !showExportMenu)}>
@@ -106,6 +108,8 @@
   .model-select option { background: #3b5998; }
   .btn-topbar { padding: 5px 12px; border-radius: 4px; border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.1); color: #fff; font-size: 12px; cursor: pointer; white-space: nowrap; }
   .btn-topbar:hover { background: rgba(255,255,255,.25); }
+  .btn-topbar.accent { background: rgba(126,232,162,.2); border-color: rgba(126,232,162,.55); }
+  .btn-topbar.accent:hover { background: rgba(126,232,162,.35); }
   .btn-topbar.icon { padding: 5px 8px; font-size: 14px; }
   .progress-wrap { width: 120px; height: 6px; background: rgba(255,255,255,.2); border-radius: 3px; overflow: hidden; }
   .progress-fill { height: 100%; background: #7ee8a2; transition: width .3s; }
