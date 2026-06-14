@@ -1,18 +1,18 @@
 # Ontologies, Knowledge Graphs, and Artificial Intelligence
 
-> **GraphBaby is not a production tool — it's my experiment** to find out whether an LLM running entirely in the browser (via WebLLM) can bridge ontologies, knowledge graphs, and AI well enough to be useful.
+> Built **GraphBaby** to explore one question: can an LLM running entirely in the browser turn raw text into a real knowledge graph — and where do ontologies, knowledge graphs, and AI actually meet?
 
 ---
 
-## 1. The experiment
+## 1. The question
 
 Three words keep getting used as if they mean the same thing: **ontology**, **knowledge graph**, and **artificial intelligence**. They are related and they overlap, but they are not the same — and I wanted to understand the seams between them by building something, not by reading another definition.
 
-The specific question I set out to test was narrow and practical: **can [WebLLM](https://github.com/mlc-ai/web-llm) — a large language model running 100% in the browser, no server, no cloud inference — take raw text and produce a usable knowledge graph?** And if it can, *where does it need an ontology to keep it honest?*
+The question I set out to explore was narrow and practical: **can [WebLLM](https://github.com/mlc-ai/web-llm) — a large language model running 100% in the browser, no server, no cloud inference — take raw text and produce a usable knowledge graph?** And if it can, *where does it need an ontology to keep it honest?*
 
-**GraphBaby is the test rig for that question, not a finished product.** It's a small, client-side app that pastes-in text, asks a local LLM to extract entities and relationships, and renders the result as an interactive graph. I built it to watch all three ideas collide in one place — the AI doing the extraction, the knowledge graph holding the output, and the open question of how much ontology I'd need to bolt on before the result was trustworthy. Don't treat it as battle-tested infrastructure; treat it as a probe.
+**GraphBaby** is what came out of poking at that. You paste in text, a local LLM extracts entities and relationships, and the result renders as an interactive graph. The interesting part isn't the app itself — it's that all three ideas end up colliding in one place: the AI doing the extraction, the knowledge graph holding the output, and the quiet, unanswered question of how much ontology you'd need before you could actually trust the result.
 
-This article is what the probe taught me. Let's untangle the three properly.
+That collision is what this article is about. Let's untangle the three properly.
 
 ---
 
