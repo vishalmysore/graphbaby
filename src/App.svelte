@@ -417,7 +417,7 @@
         <button
           class="ai-import-btn"
           onclick={() => (showWizard = true)}
-          disabled={!llm.isReady()}
+          disabled={modelStatus !== 'ready' && modelStatus !== 'running'}
         >
           ✦ AI Extract from Text
         </button>
