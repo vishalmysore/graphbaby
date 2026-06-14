@@ -219,3 +219,5 @@ An **ontology** is the formal schema of a domain — the classes, allowed relati
 ---
 
 *Built with Svelte 5, Sigma.js, and WebLLM. No backend, no cloud inference — your text never leaves your device.*
+
+*GraphBaby is inspired by [Protégé](https://protege.stanford.edu/) but is an independent, clean-room implementation containing none of its code. It implements the open W3C [OWL 2](https://www.w3.org/TR/owl2-overview/) and [RDF](https://www.w3.org/RDF/) standards, and is not affiliated with or endorsed by Stanford or the Protégé project.*

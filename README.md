@@ -116,6 +116,27 @@ type Graph = { nodes: Node[]; edges: Edge[] };
 
 ---
 
+## Acknowledgements
+
+GraphBaby is **inspired by [Protégé](https://protege.stanford.edu/)**, the ontology editor from Stanford — but it is an independent, clean-room implementation. It contains **no Protégé source code** and is not affiliated with or endorsed by Stanford or the Protégé project.
+
+It implements the open **[OWL 2](https://www.w3.org/TR/owl2-overview/)** and **[RDF](https://www.w3.org/RDF/)** standards published by the W3C, which are free for anyone to implement.
+
+Built on these open-source libraries:
+
+| Library | License |
+|---------|---------|
+| [@mlc-ai/web-llm](https://github.com/mlc-ai/web-llm) | Apache-2.0 |
+| [Svelte](https://svelte.dev) | MIT |
+| [Sigma.js](https://www.sigmajs.org) | MIT |
+| [Graphology](https://graphology.github.io) | MIT |
+| [idb](https://github.com/jakearchibald/idb) | ISC |
+| [Vite](https://vitejs.dev) | MIT |
+
+All dependencies are under permissive licenses compatible with this project's MIT license.
+
+---
+
 ## License
 
 [MIT](LICENSE) © 2026 Vishal Mysore
