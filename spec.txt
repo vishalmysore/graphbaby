@@ -1,4 +1,4 @@
-Project Spec: GraphSage (or GraphBaby / Protégé-inspired)
+Project Spec: GraphSage (or GraphBaby)
 1. Overview
 
 Build a fully client-side AI-powered knowledge graph editor that runs entirely in the browser using WebLLM (WebGPU/WASM).
@@ -7,7 +7,7 @@ The app converts:
 
 text → entities + relationships → interactive knowledge graph
 
-It should behave like a modern, lightweight version of Protégé, but AI-assisted.
+It should behave like a modern, lightweight ontology editor, but AI-assisted.
 
 Core idea:
 
@@ -252,7 +252,7 @@ Graph reasoning layer (path finding explanations)
 Plugin system for domain ontologies
 13. Suggested Product Identity
 
-If you want Protégé-like positioning:
+If you want ontology-tool positioning:
 
 GraphSage → best academic + AI tone
 GraphBaby → more playful, consumer-facing

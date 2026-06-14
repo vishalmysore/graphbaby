@@ -86,7 +86,7 @@ In GraphBaby these facts live as **individuals** — `Einstein`, `Princeton` —
 
 Here is the part that makes GraphBaby a 2026 project rather than a 2006 one.
 
-Classically, the ontology came first — painstakingly hand-authored by a specialist in an editor like Protégé — and only then was data poured into its mould by human curators or brittle rule-based extractors. Both halves were slow.
+Classically, the ontology came first — painstakingly hand-authored by a specialist in a formal ontology editor — and only then was data poured into its mould by human curators or brittle rule-based extractors. Both halves were slow.
 
 GraphBaby hands *both* halves to the AI, in the right order. A local large language model — running entirely in the browser via [WebLLM](https://github.com/mlc-ai/web-llm) on WebGPU — does the work in two passes, and the order is the whole point:
 
@@ -137,13 +137,13 @@ And the crucial relationship between the first two:
 
 ## 6. What GraphBaby actually is — and what running the experiment taught me
 
-When I started, I expected to build a loose text-to-graph sketcher. What the experiment pulled me toward was something stricter: GraphBaby ended up being an **AI-assisted OWL ontology editor** — closer to a browser-based Protégé with an AI front-end than to a casual graph doodler. Here is the pipeline, mapped to the three concepts:
+When I started, I expected to build a loose text-to-graph sketcher. What the experiment pulled me toward was something stricter: GraphBaby ended up being an **AI-assisted OWL ontology editor** — closer to a browser-based ontology editor with an AI front-end than to a casual graph doodler. Here is the pipeline, mapped to the three concepts:
 
 1. **Input** — paste unstructured text.
 2. **Extract the ontology (AI)** — the wizard's first pass drafts the **class hierarchy**; you review and approve it.
 3. **Populate it (AI, constrained)** — the second pass extracts **individuals** that may only use the approved classes and properties.
-4. **Edit like Protégé** — dedicated editors for classes, object properties, data properties, individuals, and **axioms** (`equivalentClasses`, `disjointWith`, property characteristics like `Transitive`/`Symmetric`/`Functional`). A live hierarchy tree shows `owl:Thing` at the root with everything beneath it.
-5. **Visualise & export** — render the graph with [Sigma.js](https://www.sigmajs.org) + [Graphology](https://graphology.github.io), persist to IndexedDB, and export to **JSON or OWL/RDF-XML** (real `owl:Class`, `owl:ObjectProperty`, `rdfs:subClassOf` you could open in Protégé itself).
+4. **Hand-edit the OWL** — dedicated editors for classes, object properties, data properties, individuals, and **axioms** (`equivalentClasses`, `disjointWith`, property characteristics like `Transitive`/`Symmetric`/`Functional`). A live hierarchy tree shows `owl:Thing` at the root with everything beneath it.
+5. **Visualise & export** — render the graph with [Sigma.js](https://www.sigmajs.org) + [Graphology](https://graphology.github.io), persist to IndexedDB, and export to **JSON or OWL/RDF-XML** (real `owl:Class`, `owl:ObjectProperty`, `rdfs:subClassOf` you could open in any standard ontology tool).
 
 So this is *not* a free-floating bag of nodes and edges. Every entity is a typed OWL construct with an IRI. Object properties carry `domain` and `range`. The model captures the genuine axioms — disjointness, equivalence, transitivity, functionality — that separate an ontology from a doodle. The internal type isn't `{ id, label }`; it's a full `Ontology` with `classes`, `objectProperties`, `dataProperties`, `annotationProperties`, and `individuals`.
 
@@ -153,11 +153,11 @@ Here's where the experiment actually stops — and it's the most interesting bou
 
 That gap is the whole lesson. **Capturing an ontology and reasoning over an ontology are two different things** — and a browser LLM, it turns out, is great at the first and does nothing for the second. The axioms are all dressed up with nowhere to go until a real reasoner (HermiT, Pellet, ELK) consumes the exported OWL.
 
-### The Protégé contrast
+### Manual vs. AI-assisted authoring
 
-Protégé is where humans *carefully, manually* author ontologies and run reasoners to check consistency. GraphBaby keeps the OWL model and the editing panels but swaps manual authoring for AI extraction — and leaves the reasoner out:
+Traditional ontology editors are where humans *carefully, manually* author ontologies and run reasoners to check consistency. GraphBaby keeps the same OWL model and editing panels but swaps manual authoring for AI extraction — and leaves the reasoner out:
 
-| | Protégé | GraphBaby |
+| | Traditional ontology editor | GraphBaby |
 |---|---------|-----------|
 | **First draft** | Human, manual, formal | AI, from plain text |
 | **Refinement** | Manual OWL editing | Manual OWL editing *and* AI suggestions |
@@ -199,7 +199,7 @@ A practical decision guide from building this:
 - Export to standards (OWL/RDF) that other tools can consume
 - Operate in domains where structure matters (healthcare, legal, research)
 
-→ *This is GraphBaby's actual sweet spot — and Protégé's home turf.*
+→ *This is GraphBaby's actual sweet spot — and the home turf of traditional ontology editors.*
 
 **You additionally need a reasoner when you need to:**
 - *Infer* facts nobody wrote down ("find all the cardiologists")

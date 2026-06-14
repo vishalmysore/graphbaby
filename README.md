@@ -14,7 +14,7 @@ Paste any text (articles, notes, bullet points) and GraphBaby uses a local AI mo
 text → entities + relationships → interactive graph
 ```
 
-Think of it as a modern, lightweight, AI-assisted [Protégé](https://protege.stanford.edu/).
+Think of it as a modern, lightweight, AI-assisted ontology editor.
 
 ---
 
