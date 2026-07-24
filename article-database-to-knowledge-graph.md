@@ -1,3 +1,11 @@
+---
+title: "Convert a SQL Database into a Knowledge Graph — In Your Browser"
+description: "Turn any SQLite database or PDF into an OWL knowledge graph in your browser: tables become classes, foreign keys relationships, rows individuals. No backend."
+keywords: "knowledge graph, SQL to knowledge graph, database to ontology, relational to RDF, OWL, R2RML, SQLite, sql.js, PDF to knowledge graph, WebLLM, in-browser"
+author: "Vishal Mysore"
+date: "2026-07-24"
+---
+
 # From Databases and Documents to Knowledge Graphs
 
 > The [first GraphBaby article](article.md) explained an ontology by analogy to a database: *the table schema is the ontology, the rows are the knowledge graph.* That was a teaching device. This follow-up turns it into a feature — GraphBaby now maps a real SQL database straight into an OWL ontology, and back again — and adds PDFs as a second on-ramp. No cloud, no model required for the database path: it all runs in a browser tab.
