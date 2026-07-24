@@ -1,6 +1,12 @@
 <script lang="ts">
   import type { ProposedClass, ProposedIndividual } from '../../ai/webllm';
   import type { Ontology } from '../../ontology/types';
+  import PdfDropZone from './PdfDropZone.svelte';
+
+  // Append extracted PDF text to an existing value, keeping any manual edits.
+  function appendText(current: string, added: string): string {
+    return current.trim() ? `${current.trim()}\n\n${added}` : added;
+  }
 
   interface Props {
     modelReady: boolean;
@@ -194,6 +200,11 @@
           </div>
         {/if}
 
+        <PdfDropZone
+          disabled={busy || running}
+          onText={(t) => { text = appendText(text, t); }}
+        />
+
         <label class="field">
           <span class="field-label">Domain description or article text</span>
           <textarea
@@ -294,6 +305,11 @@ Examples:
             {/each}
           </div>
         </div>
+
+        <PdfDropZone
+          disabled={busy || running}
+          onText={(t) => { indText = appendText(indText, t); }}
+        />
 
         <label class="field">
           <span class="field-label">Text with named entities (individuals)</span>

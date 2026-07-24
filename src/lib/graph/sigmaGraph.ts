@@ -8,6 +8,7 @@ export interface SimpleGraph { nodes: SimpleNode[]; edges: SimpleEdge[]; }
 
 const TYPE_COLORS: Record<string, string> = {
   Class: '#4f86c6',
+  Individual: '#e8a838',
   Person: '#4f86c6',
   Concept: '#e8a838',
   Organization: '#5cb85c',

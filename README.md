@@ -22,11 +22,13 @@ Think of it as a modern, lightweight, AI-assisted ontology editor.
 
 - **100% client-side** — AI runs in the browser via [WebLLM](https://github.com/mlc-ai/web-llm) (WebGPU/WASM)
 - **Local inference** — no data leaves your device
-- **Interactive graph** — zoom, pan, drag nodes, click to inspect
+- **PDF ingestion** — drag a PDF into the extraction wizard; text is parsed in-browser via [pdf.js](https://mozilla.github.io/pdf.js/)
+- **Database → Graph** — load a `.sqlite`/`.db` file or write SQL ([sql.js](https://sql.js.org)) and map tables → classes, columns → data properties, foreign keys → object properties, rows → individuals — deterministically, no model needed
+- **Interactive graph** — zoom, pan, drag nodes, click to inspect; **Schema** and **Instances** views
 - **AI commands** — "simplify graph", "merge duplicate nodes", "expand key concepts"
 - **Node inspector** — AI-generated summary per node
 - **Persistent storage** — graphs saved to IndexedDB
-- **Export** — download graph as JSON
+- **Export** — JSON, OWL/XML, **SQL** (tables + rows) and **CSV** (`.zip`, one file per table)
 - **GitHub Pages deployable** — static build, no server needed
 
 ---
@@ -39,6 +41,8 @@ Think of it as a modern, lightweight, AI-assisted ontology editor.
 | Build | [Vite](https://vitejs.dev) |
 | Graph | [Sigma.js](https://www.sigmajs.org) + [Graphology](https://graphology.github.io) |
 | AI | [@mlc-ai/web-llm](https://github.com/mlc-ai/web-llm) |
+| Database | [sql.js](https://sql.js.org) (SQLite/WASM) |
+| PDF | [pdf.js](https://mozilla.github.io/pdf.js/) (`pdfjs-dist`) |
 | Storage | [idb](https://github.com/jakearchibald/idb) (IndexedDB) |
 
 ---
@@ -106,9 +110,24 @@ type Graph = { nodes: Node[]; edges: Edge[] };
 
 ---
 
+## Database → Graph
+
+Beyond text extraction, GraphBaby can map a **relational database** straight into an ontology — a deterministic "direct mapping" (in the spirit of [R2RML](https://www.w3.org/TR/r2rml/)), no AI model required:
+
+| Relational | → | Ontology |
+|---|---|---|
+| table | → | Class |
+| plain column | → | Data Property (xsd type inferred from the SQL type) |
+| foreign key | → | Object Property (domain = table, range = referenced table) |
+| row *(optional)* | → | Individual, with column values as data/object-property assertions |
+
+Click **🗄 Database** in the top bar, then either **write SQL** (there's a sample schema) or **drop a `.sqlite`/`.db` file**. Preview the schema, choose whether to import rows, and convert. Everything runs in-browser via [sql.js](https://sql.js.org). The mapping is invertible — **Export → SQL / CSV** turns the ontology back into tables and rows.
+
 ## Roadmap
 
-- [ ] PDF / URL input
+- [x] PDF input
+- [x] Database (SQLite) → graph, with SQL/CSV export
+- [ ] URL input
 - [ ] GraphML export
 - [ ] Multi-document graph merging
 - [ ] Path-finding explanations
@@ -123,6 +142,8 @@ Built on these open-source libraries:
 | Library | License |
 |---------|---------|
 | [@mlc-ai/web-llm](https://github.com/mlc-ai/web-llm) | Apache-2.0 |
+| [sql.js](https://sql.js.org) | MIT |
+| [pdf.js](https://mozilla.github.io/pdf.js/) | Apache-2.0 |
 | [Svelte](https://svelte.dev) | MIT |
 | [Sigma.js](https://www.sigmajs.org) | MIT |
 | [Graphology](https://graphology.github.io) | MIT |

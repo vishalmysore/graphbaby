@@ -11,9 +11,12 @@
     onNewOntology: () => void;
     onOpenTutorials: () => void;
     onOpenChat: () => void;
+    onOpenDatabase: () => void;
     onImport: () => void;
     onExportJSON: () => void;
     onExportOWL: () => void;
+    onExportSQL: () => void;
+    onExportCSV: () => void;
   }
 
   import { AVAILABLE_MODELS } from '../../types';
@@ -21,7 +24,7 @@
   let {
     ontologyLabel, ontologyIRI, modelStatus, modelProgress,
     modelProgressText, selectedModel, onLoadModel,
-    onOpenSettings, onNewOntology, onOpenTutorials, onOpenChat, onImport, onExportJSON, onExportOWL,
+    onOpenSettings, onNewOntology, onOpenTutorials, onOpenChat, onOpenDatabase, onImport, onExportJSON, onExportOWL, onExportSQL, onExportCSV,
   }: Props = $props();
 
   let chosenModel = $state(selectedModel || AVAILABLE_MODELS[0].id);
@@ -73,6 +76,7 @@
     <button class="btn-topbar" onclick={onNewOntology} title="New Ontology">New</button>
     <button class="btn-topbar accent" onclick={onOpenTutorials} title="Load a tutorial ontology">🎓 Tutorials</button>
     <button class="btn-topbar accent" onclick={onOpenChat} title="Chat with your ontology (RAG)">💬 Chat</button>
+    <button class="btn-topbar accent" onclick={onOpenDatabase} title="Convert a SQL database into a knowledge graph">🗄 Database</button>
     <button class="btn-topbar" onclick={onImport} title="Import">Import</button>
     <div class="export-wrap">
       <button class="btn-topbar" onclick={() => (showExportMenu = !showExportMenu)}>
@@ -82,6 +86,8 @@
         <div class="dropdown" onmouseleave={() => (showExportMenu = false)}>
           <button onclick={() => { onExportJSON(); showExportMenu = false; }}>Export JSON</button>
           <button onclick={() => { onExportOWL(); showExportMenu = false; }}>Export OWL/XML</button>
+          <button onclick={() => { onExportSQL(); showExportMenu = false; }}>Export SQL (tables + rows)</button>
+          <button onclick={() => { onExportCSV(); showExportMenu = false; }}>Export CSV (.zip)</button>
         </div>
       {/if}
     </div>

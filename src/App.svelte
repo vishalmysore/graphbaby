@@ -19,6 +19,10 @@
   import OntologyWizard from './lib/components/panels/OntologyWizard.svelte';
   import TutorialsPanel from './lib/components/panels/TutorialsPanel.svelte';
   import ChatPanel from './lib/components/panels/ChatPanel.svelte';
+  import DatabaseWizard from './lib/components/panels/DatabaseWizard.svelte';
+  import type { DbGraphResult } from './lib/db/dbToOntology';
+  import { ontologyToSql, ontologyToCsv } from './lib/db/relationalExport';
+  import { createZip } from './lib/util/zip';
   import { serializeOntologyToChunks, retrieve, type GraphChunk } from './lib/ai/rag';
   import { saveChunks, loadChunks, getChunkMeta } from './lib/storage/db';
   import type { ProposedClass, ProposedIndividual } from './lib/ai/webllm';
@@ -34,6 +38,7 @@
   let showWizard = $state(false);
   let showTutorials = $state(false);
   let showChat = $state(false);
+  let showDatabase = $state(false);
   let showGraph = $state(false);
   let aiRunning = $state(false);
   let aiSuggestion = $state('');
@@ -155,6 +160,20 @@
     store.setActiveTab('individual');
   }
 
+  // ── Database → Graph ─────────────────────────────────────────────────────────
+  // Merge deterministically mapped entities into the current ontology. Ids are
+  // stable, so re-running updates in place rather than duplicating.
+  function handleApplyDatabase(result: DbGraphResult) {
+    for (const cls of result.classes) store.ontology.classes[cls.id] = cls;
+    for (const op of result.objectProperties) store.ontology.objectProperties[op.id] = op;
+    for (const dp of result.dataProperties) store.ontology.dataProperties[dp.id] = dp;
+    for (const ind of result.individuals) store.ontology.individuals[ind.id] = ind;
+    store.ontology.updatedAt = Date.now();
+    showDatabase = false;
+    store.setActiveTab('class');
+    showGraph = true; // jump straight to the graph view to show the result
+  }
+
   // ── Class AI actions ───────────────────────────────────────────────────────
   async function handleSuggestSubclasses() {
     const cls = store.selectedClass;
@@ -218,6 +237,22 @@
     const xml = buildOWLXML(store.ontology);
     const blob = new Blob([xml], { type: 'application/rdf+xml' });
     download(blob, `${store.ontology.label}.owl`);
+  }
+
+  function exportSQL() {
+    const sql = ontologyToSql(store.ontology);
+    download(new Blob([sql], { type: 'application/sql' }), `${store.ontology.label}.sql`);
+  }
+
+  function exportCSV() {
+    const files = ontologyToCsv(store.ontology);
+    if (files.length === 0) {
+      error = 'Nothing to export as CSV — add some individuals or import a database first.';
+      return;
+    }
+    const enc = new TextEncoder();
+    const zip = createZip(files.map((f) => ({ name: f.name, data: enc.encode(f.content) })));
+    download(new Blob([zip], { type: 'application/zip' }), `${store.ontology.label}-tables.zip`);
   }
 
   function download(blob: Blob, name: string) {
@@ -330,9 +365,12 @@
     onNewOntology={handleNew}
     onOpenTutorials={() => (showTutorials = true)}
     onOpenChat={() => (showChat = true)}
+    onOpenDatabase={() => (showDatabase = true)}
     onImport={handleImport}
     onExportJSON={exportJSON}
     onExportOWL={exportOWL}
+    onExportSQL={exportSQL}
+    onExportCSV={exportCSV}
   />
 
   {#if error}
@@ -550,6 +588,14 @@
     ontologyLabel={store.ontology.label}
     onAsk={handleChatAsk}
     onClose={() => (showChat = false)}
+  />
+{/if}
+
+{#if showDatabase}
+  <DatabaseWizard
+    baseIRI={store.ontology.iri}
+    onApply={handleApplyDatabase}
+    onClose={() => (showDatabase = false)}
   />
 {/if}
 
